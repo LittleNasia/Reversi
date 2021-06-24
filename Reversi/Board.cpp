@@ -63,7 +63,7 @@ uint32_t* Board::getMoves()
 	//test upwards
 	for (int iteration = 0; iteration < rows - 1; iteration++)
 	{
-
+		left_down(own_bb);
 	}
 
 
