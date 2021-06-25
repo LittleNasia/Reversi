@@ -8,7 +8,8 @@ int main()
 {
     auto start = high_resolution_clock::now();
     auto stop = high_resolution_clock::now();
-    
+    Board b;
+    b.printBoard();
     auto duration = duration_cast<microseconds>(stop - start);
     std::cout << duration.count() << "\n";
 }

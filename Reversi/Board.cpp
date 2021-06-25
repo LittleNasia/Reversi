@@ -1,9 +1,51 @@
 #include "Board.h"
-
+#include <iostream>
 
 Board::Board()
 {
 	newGame();
+}
+
+void Board::printBoard()
+{
+	int index = 63;
+	getMoves();
+	int x = available_moves[0];
+	int moves_i = 0;
+	while (x != invalid_index)
+	{
+		std::cout << x << " ";
+		moves_i++;
+		x = available_moves[moves_i];
+	}
+	int move_index = 0;
+	for (int row = 0; row < rows; row++)
+	{
+		for (int col = 0; col < cols; col++)
+		{
+			std::cout << "[";
+			if ((1ULL << index) & m_bb[COLOR_BLACK])
+			{
+				std::cout << "X";
+			}
+			else if ((1ULL << index) & m_bb[COLOR_WHITE])
+			{
+				std::cout << "O";
+			}
+			else if (available_moves[move_index] == index)
+			{
+				std::cout << "T";
+				move_index++;
+			}
+			else
+			{
+				std::cout << " ";
+			}
+			std::cout << "]";
+			index--;
+		}
+		std::cout << "\n";
+	}
 }
 
 void Board::newGame()
@@ -19,7 +61,6 @@ void Board::newGame()
 	m_ply = 0;
 }
 
-//using 
 uint8_t* Board::getMoves()
 {
 	const auto& own_bb = m_bb[side_to_move];
@@ -54,48 +95,48 @@ uint8_t* Board::getMoves()
 
 	victims = down(own_bb) & enemy_bb;
 	for (int i = 0; i < rows - 3; ++i)
-		victims |= down(own_bb) & enemy_bb;
-	result |= down(own_bb) & empty;
+		victims |= down(victims) & enemy_bb;
+	result |= down(victims) & empty;
 
 	victims = left(own_bb) & enemy_bb;
 	for (int i = 0; i < cols - 3; ++i)
-		victims |= left(own_bb) & enemy_bb;
-	result |= left(own_bb) & empty;
+		victims |= left(victims) & enemy_bb;
+	result |= left(victims) & empty;
 
 	victims = right(own_bb) & enemy_bb;
 	for (int i = 0; i < cols - 3; ++i)
-		victims |= right(own_bb) & enemy_bb;
-	result |= right(own_bb) & empty;
+		victims |= right(victims) & enemy_bb;
+	result |= right(victims) & empty;
 
 	
 	constexpr int iterations = ((rows - 3) < (cols - 3)) ? (rows - 3) : (cols - 3);
 
 	victims = left_down(own_bb) & enemy_bb;
 	for (int i = 0; i < iterations; ++i)
-		victims |= left_down(own_bb) & enemy_bb;
-	result |= left_down(own_bb) & empty;
+		victims |= left_down(victims) & enemy_bb;
+	result |= left_down(victims) & empty;
 
 	victims = right_down(own_bb) & enemy_bb;
 	for (int i = 0; i < iterations; ++i)
-		victims |= right_down(own_bb) & enemy_bb;
-	result |= right_down(own_bb) & empty;
+		victims |= right_down(victims) & enemy_bb;
+	result |= right_down(victims) & empty;
 
 	victims = left_up (own_bb)&enemy_bb;
 	for (int i = 0; i < iterations; ++i)
-		victims |= left_up(own_bb) & enemy_bb;
-	result |= left_up(own_bb) & empty;
+		victims |= left_up(victims) & enemy_bb;
+	result |= left_up(victims) & empty;
 
 	victims = right_up(own_bb) & enemy_bb;
 	for (int i = 0; i < iterations; ++i)
-		victims |= right_up(own_bb) & enemy_bb;
-	result |= right_up(own_bb) & empty;
+		victims |= right_up(victims) & enemy_bb;
+	result |= right_up(victims) & empty;
 
 
 	//convert bits to array of move indices
 	unsigned long long move_index = 0;
 	while (result)
 	{
-		available_moves[move_index] = _lzcnt_u64(result)^63;
+		available_moves[move_index] = _lzcnt_u64(result) ^ 63;
 		result ^= (1ULL << available_moves[move_index++]);
 	}
 	available_moves[move_index] = invalid_index;

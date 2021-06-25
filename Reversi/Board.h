@@ -1,6 +1,5 @@
 #pragma once
 #include "Utils.h"
-#include "BitUtilities.h"
 
 class PiecePositionContainer;
 
@@ -26,6 +25,7 @@ public:
 	bool do_move(int square);
 	bool do_move(Point target_square);
 	uint8_t* getMoves();
+	void printBoard();
 	void newGame();
 private:
 	bitboard m_bb[COLOR_NONE];

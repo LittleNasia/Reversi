@@ -1,5 +1,5 @@
 #pragma once
-#include <cstdint>
+#include "BitUtilities.h"
 #include <Eigen/Core>
 enum Color
 {

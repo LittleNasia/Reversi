@@ -1,5 +1,6 @@
 #pragma once
 #include <intrin.h>
+#include <cstdint>
 using bitboard = uint_fast64_t;;
 
 inline constexpr bitboard up(const bitboard b)
