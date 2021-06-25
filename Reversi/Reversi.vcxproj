@@ -157,6 +157,7 @@
     <ClCompile Include="Reversi.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BitUtilities.h" />
     <ClInclude Include="Board.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
