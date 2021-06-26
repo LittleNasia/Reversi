@@ -9,7 +9,15 @@ int main()
     auto start = high_resolution_clock::now();
     auto stop = high_resolution_clock::now();
     Board b;
-    b.printBoard();
+    while (true)
+    {
+        int move;
+        b.printBoard();
+        std::cin >> move;
+        b.do_random_move();
+    }
+    
+   
     auto duration = duration_cast<microseconds>(stop - start);
     std::cout << duration.count() << "\n";
 }

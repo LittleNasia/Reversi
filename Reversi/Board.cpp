@@ -1,5 +1,6 @@
 #include "Board.h"
 #include <iostream>
+#include <functional>
 
 Board::Board()
 {
@@ -18,6 +19,7 @@ void Board::printBoard()
 		moves_i++;
 		x = available_moves[moves_i];
 	}
+	std::cout << "\n";
 	int move_index = 0;
 	for (int row = 0; row < rows; row++)
 	{
@@ -139,7 +141,208 @@ uint8_t* Board::getMoves()
 		available_moves[move_index] = _lzcnt_u64(result) ^ 63;
 		result ^= (1ULL << available_moves[move_index++]);
 	}
+	num_moves = move_index;
 	available_moves[move_index] = invalid_index;
 
 	return available_moves;
+}
+
+//only to be called with a move that is legal for sure
+void Board::capture(uint8_t move)
+{
+	uint32_t move_masks = 0;
+	auto& own_bb = m_bb[side_to_move];
+	auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
+	const auto& empty = ~(own_bb | enemy_bb);
+	own_bb ^= (1ULL << move);
+	constexpr bitboard(*direction_functions[])(bitboard) = {
+		left_up,
+		up,
+		right_up,
+		right,
+		right_down,
+		down,
+		left_down,
+		left };
+	for (int direction = DIRECTION_UP_LEFT; direction < DIRECTION_NONE; direction++)
+	{
+		bitboard victims = 0ULL;
+		bitboard move_square = (1ULL << move);
+		for (int iteration = 0; iteration < capture_iteration_count[move][direction]; iteration++)
+		{
+			victims |= (move_square = direction_functions[direction](move_square)) & enemy_bb;
+			if (move_square & own_bb)
+			{
+				enemy_bb ^= victims;
+				own_bb ^= victims;
+				if (victims)
+				{
+					move_masks |= (1ULL << direction);
+				}
+				break;
+			}
+			else if (move_square & empty)
+			{
+				break;
+			}
+			/*
+			if (direction == DIRECTION_UP_LEFT)
+			{
+				victims |= (move_square = left_up(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}
+			else if (direction == DIRECTION_UP)
+			{
+				victims |= (move_square = up(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}
+			else if (direction == DIRECTION_UP_RIGHT)
+			{
+				victims |= (move_square = right_up(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}
+			else if (direction == DIRECTION_RIGHT)
+			{
+				victims |= (move_square = right(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}
+			else if (direction == DIRECTION_DOWN_RIGHT)
+			{
+				victims |= (move_square = right_down(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}
+			else if (direction == DIRECTION_DOWN)
+			{
+				victims |= (move_square = down(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}
+			else if (direction == DIRECTION_DOWN_LEFT)
+			{
+				victims |= (move_square = left_down(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}
+			else if (direction == DIRECTION_LEFT)
+			{
+				victims |= (move_square = left(move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					if (victims)
+					{
+						move_masks |= (1ULL << direction);
+					}
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
+			}*/
+		}
+	}
+	std::cout << move_masks << "\n";
+	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
+}
+
+bool Board::do_move(int square)
+{
+	capture(square);
+	return true;
+}
+
+void Board::do_random_move()
+{
+	do_move(available_moves[rng() % num_moves]);
 }

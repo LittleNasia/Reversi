@@ -24,14 +24,17 @@ public:
 	using input_type = Eigen::Matrix<ScalarType, rows, cols * NN_input_channels>;
 	bool do_move(int square);
 	bool do_move(Point target_square);
+	void do_random_move();
 	uint8_t* getMoves();
 	void printBoard();
 	void newGame();
 private:
 	bitboard m_bb[COLOR_NONE];
+	void capture(uint8_t move);
 	input_type m_nn_input;
 	Color side_to_move;
+	int m_ply;
 	//this assumes that there will never be more than 32 moves in a position
 	uint8_t available_moves[rows * cols / 2];
-	int m_ply;
+	int num_moves;
 };
