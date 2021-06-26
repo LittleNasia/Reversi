@@ -6,18 +6,25 @@ using namespace std::chrono;
 
 int main()
 {
-    auto start = high_resolution_clock::now();
-    auto stop = high_resolution_clock::now();
-    Board b;
-    while (true)
-    {
-        int move;
-        b.printBoard();
-        std::cin >> move;
-        b.do_random_move();
-    }
     
-   
-    auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << duration.count() << "\n";
+    unsigned long long d = 0;
+    Board b;
+    for (int i = 0; i < 10; i++)
+    {
+        auto start = high_resolution_clock::now();
+        
+        for (unsigned long long i = 0; i < 10000000; i++)
+        {
+            int move;
+            //b.printBoard();
+            b.do_random_move();
+        }
+        
+        auto stop = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(stop - start);
+        d += duration.count();
+        std::cout << duration.count() << "\n";
+    }
+    b.printBoard();
+    std::cout << "took " << d / 10 << "\n";
 }

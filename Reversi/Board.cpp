@@ -170,6 +170,7 @@ void Board::capture(uint8_t move)
 		bitboard move_square = (1ULL << move);
 		for (int iteration = 0; iteration < capture_iteration_count[move][direction]; iteration++)
 		{
+			
 			victims |= (move_square = direction_functions[direction](move_square)) & enemy_bb;
 			if (move_square & own_bb)
 			{
@@ -185,164 +186,35 @@ void Board::capture(uint8_t move)
 			{
 				break;
 			}
-			/*
-			if (direction == DIRECTION_UP_LEFT)
-			{
-				victims |= (move_square = left_up(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}
-			else if (direction == DIRECTION_UP)
-			{
-				victims |= (move_square = up(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}
-			else if (direction == DIRECTION_UP_RIGHT)
-			{
-				victims |= (move_square = right_up(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}
-			else if (direction == DIRECTION_RIGHT)
-			{
-				victims |= (move_square = right(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}
-			else if (direction == DIRECTION_DOWN_RIGHT)
-			{
-				victims |= (move_square = right_down(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}
-			else if (direction == DIRECTION_DOWN)
-			{
-				victims |= (move_square = down(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}
-			else if (direction == DIRECTION_DOWN_LEFT)
-			{
-				victims |= (move_square = left_down(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}
-			else if (direction == DIRECTION_LEFT)
-			{
-				victims |= (move_square = left(move_square)) & enemy_bb;
-				if (move_square & own_bb)
-				{
-					enemy_bb ^= victims;
-					own_bb ^= victims;
-					if (victims)
-					{
-						move_masks |= (1ULL << direction);
-					}
-					break;
-				}
-				else if (move_square & empty)
-				{
-					break;
-				}
-			}*/
+			
+			
 		}
 	}
-	std::cout << move_masks << "\n";
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 }
 
 bool Board::do_move(int square)
 {
-	capture(square);
+	if (!num_moves)
+	{
+		newGame();
+	}
+	else
+	{
+		capture(square);
+	}
 	return true;
 }
 
 void Board::do_random_move()
 {
-	do_move(available_moves[rng() % num_moves]);
+	getMoves();
+	if (!num_moves)
+	{
+		newGame();
+	}
+	else
+	{
+		do_move(available_moves[rng() % num_moves]);
+	}
 }
