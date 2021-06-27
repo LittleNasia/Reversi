@@ -61,6 +61,8 @@ void Board::newGame()
 	m_bb[COLOR_BLACK] = 0 | (1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4));
 	m_bb[COLOR_WHITE] = 0 | (1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3));
 	m_ply = 0;
+	forced_passes = 0;
+	result = COLOR_NONE;
 }
 
 uint8_t* Board::getMoves()
@@ -155,7 +157,7 @@ void Board::capture(uint8_t move)
 	auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
 	const auto& empty = ~(own_bb | enemy_bb);
 	own_bb ^= (1ULL << move);
-	constexpr bitboard(*direction_functions[])(bitboard) = {
+	constexpr bitboard(*direction_functions[])(const bitboard) = {
 		left_up,
 		up,
 		right_up,
@@ -170,7 +172,6 @@ void Board::capture(uint8_t move)
 		bitboard move_square = (1ULL << move);
 		for (int iteration = 0; iteration < capture_iteration_count[move][direction]; iteration++)
 		{
-			
 			victims |= (move_square = direction_functions[direction](move_square)) & enemy_bb;
 			if (move_square & own_bb)
 			{
@@ -186,24 +187,63 @@ void Board::capture(uint8_t move)
 			{
 				break;
 			}
-			
-			
 		}
 	}
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 }
 
-bool Board::do_move(int square)
+void Board::do_move(int square)
 {
 	if (!num_moves)
 	{
-		newGame();
+		forced_passes++;
 	}
 	else
 	{
 		capture(square);
 	}
-	return true;
+	if (forced_passes >= 2)
+	{
+		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
+	}
+}
+
+bool Board::do_move_is_legal(int square)
+{
+	getMoves();
+	if (!num_moves)
+	{
+		forced_passes++;
+	}
+	else
+	{
+		int curr_move = available_moves[0];
+		int index = 0;
+		bool found = 0;
+		while (curr_move != invalid_index)
+		{
+			curr_move = available_moves[index++];
+			if (curr_move = square)
+			{
+				found = true;
+				break;
+			}
+		}
+		if (found)
+		{
+			capture(square);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	if (forced_passes >= 2)
+	{
+		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
+		return false;
+	}
 }
 
 void Board::do_random_move()
@@ -211,10 +251,14 @@ void Board::do_random_move()
 	getMoves();
 	if (!num_moves)
 	{
-		newGame();
+		forced_passes++;
 	}
 	else
 	{
-		do_move(available_moves[rng() % num_moves]);
+		capture(available_moves[rng() % num_moves]);
 	}
-}
+	if (forced_passes >= 2)
+	{
+		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
+	}
+}	

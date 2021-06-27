@@ -22,8 +22,12 @@ public:
 		return row * cols + col;
 	}
 	using input_type = Eigen::Matrix<ScalarType, rows, cols * NN_input_channels>;
-	bool do_move(int square);
+	//does NOT check for legality of the move (only to be used
+	void do_move(int square);
+	//does check for legality of the move
+	bool do_move_is_legal(int square);
 	bool do_move(Point target_square);
+	//gets the available moves list and then makes the move
 	void do_random_move();
 	uint8_t* getMoves();
 	void printBoard();
@@ -33,8 +37,10 @@ private:
 	void capture(uint8_t move);
 	input_type m_nn_input;
 	Color side_to_move;
+	Color result;
 	int m_ply;
 	//this assumes that there will never be more than 32 moves in a position
 	uint8_t available_moves[rows * cols / 2];
 	int num_moves;
+	int forced_passes;
 };
