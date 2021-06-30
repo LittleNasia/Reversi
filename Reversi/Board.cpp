@@ -36,7 +36,7 @@ void Board::printBoard()
 			}
 			else if (available_moves[move_index] == index)
 			{
-				std::cout << "T";
+				std::cout << " ";
 				move_index++;
 			}
 			else
@@ -63,6 +63,8 @@ void Board::newGame()
 	m_ply = 0;
 	forced_passes = 0;
 	result = COLOR_NONE;
+	move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
+	move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
 }
 
 uint8_t* Board::getMoves()
@@ -152,6 +154,7 @@ uint8_t* Board::getMoves()
 //only to be called with a move that is legal for sure
 void Board::capture(uint8_t move)
 {
+	m_ply++;
 	uint32_t move_masks = 0;
 	auto& own_bb = m_bb[side_to_move];
 	auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
@@ -177,10 +180,6 @@ void Board::capture(uint8_t move)
 			{
 				enemy_bb ^= victims;
 				own_bb ^= victims;
-				if (victims)
-				{
-					move_masks |= (1ULL << direction);
-				}
 				break;
 			}
 			else if (move_square & empty)
@@ -189,6 +188,8 @@ void Board::capture(uint8_t move)
 			}
 		}
 	}
+	move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
+	move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 }
 
@@ -220,6 +221,8 @@ bool Board::do_move_is_legal(int square)
 		int curr_move = available_moves[0];
 		int index = 0;
 		bool found = 0;
+		//could use binary search, however the function is still only to be called by humans anyways
+		//it's not speed critical 
 		while (curr_move != invalid_index)
 		{
 			curr_move = available_moves[index++];
@@ -262,3 +265,11 @@ void Board::do_random_move()
 		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
 	}
 }	
+
+void Board::undoMove()
+{
+	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
+	m_ply--;
+	m_bb[COLOR_WHITE] = move_history[m_ply].white_bb;
+	m_bb[COLOR_BLACK ] = move_history[m_ply].black_bb;
+}

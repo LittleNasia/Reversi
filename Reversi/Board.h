@@ -5,9 +5,8 @@ class PiecePositionContainer;
 
 struct Move
 {
-	Point pos;
-	//bitmasks that determine in which directions the move captured
-	uint32_t moveDirectionMasks;
+	bitboard black_bb;
+	bitboard white_bb;
 };
 
 class Board
@@ -32,6 +31,9 @@ public:
 	uint8_t* getMoves();
 	void printBoard();
 	void newGame();
+	void undoMove();
+	int getScore() { return __popcnt64(m_bb[COLOR_BLACK]) - __popcnt64(m_bb[COLOR_WHITE]); }
+	int isOver() { return result != COLOR_NONE; }
 private:
 	bitboard m_bb[COLOR_NONE];
 	void capture(uint8_t move);
@@ -43,4 +45,5 @@ private:
 	uint8_t available_moves[rows * cols / 2];
 	int num_moves;
 	int forced_passes;
+	Move move_history[60];
 };

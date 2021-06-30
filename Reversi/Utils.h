@@ -118,10 +118,10 @@ inline static unsigned long x =
 	0xABCDABCDABCD) ^
 	__rdtsc() ^
 	(int)"lol" ^
-	(((long long)"zaba") << 32) ^
-	__readmsr(__rdtsc()) ^
-	_rdpid_u32() ^
-	__readcr0();
+	(((long long)"zaba") << 32) //^
+	//__readmsr(__rdtsc()) ^
+	//_rdpid_u32() ^
+	//__readcr0()
 
 
 
