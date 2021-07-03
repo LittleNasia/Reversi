@@ -1,7 +1,6 @@
 #include <iostream>
 #include "Board.h"
 #include <chrono>
-#include <half.hpp>
 using namespace std::chrono;
 
 int main()
@@ -18,14 +17,23 @@ int main()
         for (unsigned long long i = 0; i < 10000000; i++)
         {
             int move;
-            //b.printBoard();
+            std::cout << b.getPly() << "\n";
+            //std::cout << "board before random move\n";
+           // b.printBoard();
+           // std::cout << "board after random move\n";
             b.do_random_move();
+           // b.printBoard();
+           // std::cout << "board after undo move\n";
             b.undoMove();
+           // b.printBoard();
+            //std::cout << "board after random move\n";
             b.do_random_move();
-            //b.printBoard();
+           // b.printBoard();
+          //  std::cout << "\n\n";
             if (b.isOver())
             {
                 sum += b.getScore();
+                //std::cout << sum << "\n";
                 games++;
                 b.newGame();
             }

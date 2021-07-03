@@ -65,9 +65,10 @@ void Board::newGame()
 	result = COLOR_NONE;
 	move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
 	move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
+	move_history[m_ply].forced_passes = 0;
 }
 
-uint8_t* Board::getMoves()
+const uint8_t* Board::getMoves()
 {
 	const auto& own_bb = m_bb[side_to_move];
 	const auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
@@ -152,9 +153,8 @@ uint8_t* Board::getMoves()
 }
 
 //only to be called with a move that is legal for sure
-void Board::capture(uint8_t move)
+void Board::capture(const uint8_t move)
 {
-	m_ply++;
 	uint32_t move_masks = 0;
 	auto& own_bb = m_bb[side_to_move];
 	auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
@@ -190,31 +190,39 @@ void Board::capture(uint8_t move)
 	}
 	move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
 	move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
+	move_history[m_ply].forced_passes = 0;
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 }
 
-void Board::do_move(int square)
+void Board::do_move(const int square)
 {
+	m_ply++;
 	if (!num_moves)
 	{
 		forced_passes++;
+		move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
+		move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
+		move_history[m_ply].forced_passes = forced_passes;
+		side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 	}
 	else
 	{
+		forced_passes = 0;
 		capture(square);
-	}
-	if (forced_passes >= 2)
-	{
-		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
-	}
+	}	
 }
 
-bool Board::do_move_is_legal(int square)
+const bool Board::do_move_is_legal(const int square)
 {
+	m_ply++;
 	getMoves();
 	if (!num_moves)
 	{
 		forced_passes++;
+		side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
+		move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
+		move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
+		move_history[m_ply].forced_passes = forced_passes;
 	}
 	else
 	{
@@ -234,6 +242,7 @@ bool Board::do_move_is_legal(int square)
 		}
 		if (found)
 		{
+			forced_passes = 0;
 			capture(square);
 			return true;
 		}
@@ -247,29 +256,34 @@ bool Board::do_move_is_legal(int square)
 		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
 		return false;
 	}
+	
 }
 
 void Board::do_random_move()
 {
+	m_ply++;
 	getMoves();
 	if (!num_moves)
 	{
 		forced_passes++;
+		move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
+		move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
+		move_history[m_ply].forced_passes = forced_passes;
+		side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 	}
 	else
 	{
+		forced_passes = 0;
 		capture(available_moves[rng() % num_moves]);
-	}
-	if (forced_passes >= 2)
-	{
-		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
 	}
 }	
 
 void Board::undoMove()
 {
+	forced_passes = std::max(forced_passes - 1, 0LL);
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 	m_ply--;
 	m_bb[COLOR_WHITE] = move_history[m_ply].white_bb;
-	m_bb[COLOR_BLACK ] = move_history[m_ply].black_bb;
+	m_bb[COLOR_BLACK] = move_history[m_ply].black_bb;
+	forced_passes = move_history[m_ply].forced_passes;
 }

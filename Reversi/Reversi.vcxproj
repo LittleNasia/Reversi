@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="BitUtilities.h" />
     <ClInclude Include="Board.h" />
+    <ClInclude Include="MostMoves.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

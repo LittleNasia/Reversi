@@ -7,6 +7,7 @@ struct Move
 {
 	bitboard black_bb;
 	bitboard white_bb;
+	int64_t forced_passes;
 };
 
 class Board
@@ -22,18 +23,20 @@ public:
 	}
 	using input_type = Eigen::Matrix<ScalarType, rows, cols * NN_input_channels>;
 	//does NOT check for legality of the move (only to be used
-	void do_move(int square);
+	void do_move(const int square);
 	//does check for legality of the move
-	bool do_move_is_legal(int square);
-	bool do_move(Point target_square);
+	const bool do_move_is_legal(const int square);
+	const bool do_move(const Point target_square);
 	//gets the available moves list and then makes the move
 	void do_random_move();
-	uint8_t* getMoves();
+	const uint8_t* getMoves();
 	void printBoard();
 	void newGame();
 	void undoMove();
-	int getScore() { return __popcnt64(m_bb[COLOR_BLACK]) - __popcnt64(m_bb[COLOR_WHITE]); }
-	int isOver() { return result != COLOR_NONE; }
+	const int getNumMoves() const { return num_moves; }
+	const int getScore() const { return __popcnt64(m_bb[COLOR_BLACK]) - __popcnt64(m_bb[COLOR_WHITE]); }
+	const int isOver() const { return forced_passes > 1; }
+	const int getPly() const { return m_ply; }
 private:
 	bitboard m_bb[COLOR_NONE];
 	void capture(uint8_t move);
@@ -44,6 +47,7 @@ private:
 	//this assumes that there will never be more than 32 moves in a position
 	uint8_t available_moves[rows * cols / 2];
 	int num_moves;
-	int forced_passes;
-	Move move_history[60];
+	int64_t forced_passes;
+	int m_score;
+	Move move_history[100];
 };
