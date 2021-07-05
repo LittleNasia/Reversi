@@ -14,9 +14,9 @@ class Board
 {
 public:
 	Board();
-	static constexpr uint32_t rows = 8;
-	static constexpr uint32_t cols = 8;
-	static constexpr uint32_t invalid_index = rows * cols;
+	static constexpr int32_t rows = 8;
+	static constexpr int32_t cols = 8;
+	static constexpr int32_t invalid_index = rows * cols;
 	static inline constexpr unsigned int to_1d(const unsigned int row, const unsigned int col)
 	{
 		return row * cols + col;
@@ -37,6 +37,7 @@ public:
 	const int getScore() const { return __popcnt64(m_bb[COLOR_BLACK]) - __popcnt64(m_bb[COLOR_WHITE]); }
 	const int isOver() const { return forced_passes > 1; }
 	const int getPly() const { return m_ply; }
+	const Color getSideToMove() const { return side_to_move; }
 private:
 	bitboard m_bb[COLOR_NONE];
 	void capture(uint8_t move);

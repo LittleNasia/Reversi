@@ -155,127 +155,97 @@ const uint8_t* Board::getMoves()
 //only to be called with a move that is legal for sure
 void Board::capture(const uint8_t move)
 {
-	uint32_t move_masks = 0;
-	auto& own_bb = m_bb[side_to_move];
-	auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
-	const auto& empty = ~(own_bb | enemy_bb);
-	own_bb ^= (1ULL << move);
-	constexpr bitboard(*direction_functions[])(const bitboard) = {
-		left_up,
-		up,
-		right_up,
-		right,
-		right_down,
-		down,
-		left_down,
-		left };
-	for (int direction = DIRECTION_UP_LEFT; direction < DIRECTION_NONE; direction++)
+	if (move != invalid_index)
 	{
-		bitboard victims = 0ULL;
-		bitboard move_square = (1ULL << move);
-		for (int iteration = 0; iteration < capture_iteration_count[move][direction]; iteration++)
+		uint32_t move_masks = 0;
+		auto& own_bb = m_bb[side_to_move];
+		auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
+		const auto& empty = ~(own_bb | enemy_bb);
+		own_bb ^= (1ULL << move);
+		constexpr bitboard(*direction_functions[])(const bitboard) = {
+			left_up,
+			up,
+			right_up,
+			right,
+			right_down,
+			down,
+			left_down,
+			left };
+		for (int direction = DIRECTION_UP_LEFT; direction < DIRECTION_NONE; direction++)
 		{
-			victims |= (move_square = direction_functions[direction](move_square)) & enemy_bb;
-			if (move_square & own_bb)
+			bitboard victims = 0ULL;
+			bitboard move_square = (1ULL << move);
+			for (int iteration = 0; iteration < capture_iteration_count[move][direction]; iteration++)
 			{
-				enemy_bb ^= victims;
-				own_bb ^= victims;
-				break;
-			}
-			else if (move_square & empty)
-			{
-				break;
+				victims |= (move_square = direction_functions[direction](move_square)) & enemy_bb;
+				if (move_square & own_bb)
+				{
+					enemy_bb ^= victims;
+					own_bb ^= victims;
+					break;
+				}
+				else if (move_square & empty)
+				{
+					break;
+				}
 			}
 		}
+		move_history[m_ply].forced_passes = 0;
+	}
+	else
+	{
+		forced_passes++;
+		move_history[m_ply].forced_passes = forced_passes;
 	}
 	move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
 	move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
-	move_history[m_ply].forced_passes = 0;
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 }
 
 void Board::do_move(const int square)
 {
 	m_ply++;
-	if (!num_moves)
-	{
-		forced_passes++;
-		move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
-		move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
-		move_history[m_ply].forced_passes = forced_passes;
-		side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
-	}
-	else
-	{
-		forced_passes = 0;
-		capture(square);
-	}	
+	capture(square);
 }
 
 const bool Board::do_move_is_legal(const int square)
 {
 	m_ply++;
 	getMoves();
-	if (!num_moves)
+	int curr_move = available_moves[0];
+	int index = 0;
+	bool found = 0;
+	//could use binary search, however the function is still only to be called by humans anyways
+	//it's not speed critical 
+	while (curr_move != invalid_index)
 	{
-		forced_passes++;
-		side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
-		move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
-		move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
-		move_history[m_ply].forced_passes = forced_passes;
+		curr_move = available_moves[index++];
+		if (curr_move = square)
+		{
+			found = true;
+			break;
+		}
+	}
+	if (found)
+	{
+		capture(square);
+		return true;
 	}
 	else
 	{
-		int curr_move = available_moves[0];
-		int index = 0;
-		bool found = 0;
-		//could use binary search, however the function is still only to be called by humans anyways
-		//it's not speed critical 
-		while (curr_move != invalid_index)
-		{
-			curr_move = available_moves[index++];
-			if (curr_move = square)
-			{
-				found = true;
-				break;
-			}
-		}
-		if (found)
-		{
-			forced_passes = 0;
-			capture(square);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	if (forced_passes >= 2)
-	{
-		result = __popcnt64(m_bb[COLOR_BLACK]) > __popcnt64(m_bb[COLOR_WHITE]) ? COLOR_BLACK : COLOR_WHITE;
+		std::cout << "illegal\n";
 		return false;
 	}
-	
 }
 
 void Board::do_random_move()
 {
 	m_ply++;
 	getMoves();
-	if (!num_moves)
-	{
-		forced_passes++;
-		move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
-		move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
-		move_history[m_ply].forced_passes = forced_passes;
-		side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
-	}
-	else
-	{
-		forced_passes = 0;
+	if (num_moves)
 		capture(available_moves[rng() % num_moves]);
-	}
+	else
+		capture(invalid_index);
 }	
 
 void Board::undoMove()
