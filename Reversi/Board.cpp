@@ -1,13 +1,14 @@
 #include "Board.h"
 #include <iostream>
 #include <functional>
+#include "Search.h"
 
 Board::Board()
 {
-	newGame();
+	new_game();
 }
 
-void Board::printBoard()
+void Board::print_board()
 {
 	int index = 63;
 	getMoves();
@@ -48,9 +49,11 @@ void Board::printBoard()
 		}
 		std::cout << "\n";
 	}
+	std::cout << "poskey is : " << search::hash(*this) << "\n";
+	std::cout << "current side to move is " << ((side_to_move == COLOR_BLACK) ? 'X' : 'O') << "\n";
 }
 
-void Board::newGame()
+void Board::new_game()
 {
 	side_to_move = COLOR_BLACK;
 	m_nn_input.setZero();
@@ -157,6 +160,7 @@ void Board::capture(const uint8_t move)
 {
 	if (move != invalid_index)
 	{
+		forced_passes = 0;
 		uint32_t move_masks = 0;
 		auto& own_bb = m_bb[side_to_move];
 		auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
@@ -177,7 +181,39 @@ void Board::capture(const uint8_t move)
 			bitboard move_square = (1ULL << move);
 			for (int iteration = 0; iteration < capture_iteration_count[move][direction]; iteration++)
 			{
-				victims |= (move_square = direction_functions[direction](move_square)) & enemy_bb;
+				if (direction == DIRECTION_UP_LEFT)
+				{
+					move_square = left_up(move_square);
+				}
+				else if (direction == DIRECTION_UP)
+				{
+					move_square = up(move_square);
+				}
+				else if (direction == DIRECTION_UP_RIGHT)
+				{
+					move_square = right_up(move_square);
+				}
+				else if (direction == DIRECTION_RIGHT)
+				{
+					move_square = right(move_square);
+				}
+				else if (direction == DIRECTION_DOWN_RIGHT)
+				{
+					move_square = right_down(move_square);
+				}
+				else if (direction == DIRECTION_DOWN)
+				{
+					move_square = down(move_square);
+				}
+				else if (direction == DIRECTION_DOWN_LEFT)
+				{
+					move_square = left_down(move_square);
+				}
+				else if (direction == DIRECTION_LEFT)
+				{
+					move_square = left(move_square);
+				}
+				victims |= move_square & enemy_bb;
 				if (move_square & own_bb)
 				{
 					enemy_bb ^= victims;
@@ -220,13 +256,13 @@ const bool Board::do_move_is_legal(const int square)
 	while (curr_move != invalid_index)
 	{
 		curr_move = available_moves[index++];
-		if (curr_move = square)
+		if (curr_move == square)
 		{
 			found = true;
 			break;
 		}
 	}
-	if (found)
+	if (found || (square == invalid_index))
 	{
 		capture(square);
 		return true;
@@ -234,6 +270,19 @@ const bool Board::do_move_is_legal(const int square)
 	else
 	{
 		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+		std::cout << "illegal\n";
+
 		return false;
 	}
 }
@@ -243,12 +292,12 @@ void Board::do_random_move()
 	m_ply++;
 	getMoves();
 	if (num_moves)
-		capture(available_moves[rng() % num_moves]);
+		capture(available_moves[rng::rng() % num_moves]);
 	else
 		capture(invalid_index);
 }	
 
-void Board::undoMove()
+void Board::undo_move()
 {
 	forced_passes = std::max(forced_passes - 1, 0LL);
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;

@@ -32,7 +32,7 @@ const int MostPiecesTaken::makeMove(Board& b)
 			//std::cout << "found new best move which is " << best_move << "\n";
 		}
 		curr_move++;
-		b.undoMove();
+		b.undo_move();
 	}
 	return best_move;
 }

@@ -151,17 +151,24 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StackReserveSize>32000000</StackReserveSize>
+      <AdditionalOptions>/USEPROFILE %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
+    <ClCompile Include="Evaluate.cpp" />
     <ClCompile Include="MostPiecesTaken.cpp" />
     <ClCompile Include="Reversi.cpp" />
+    <ClCompile Include="Search.cpp" />
+    <ClCompile Include="TT.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BitUtilities.h" />
     <ClInclude Include="Board.h" />
+    <ClInclude Include="Evaluate.h" />
+    <ClInclude Include="Search.h" />
     <ClInclude Include="MostPiecesTaken.h" />
+    <ClInclude Include="TT.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

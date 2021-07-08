@@ -3,11 +3,13 @@
 #include <chrono>
 #include <cstring>
 #include "MostPiecesTaken.h"
+#include "Search.h"
+
 using namespace std::chrono;
 
 unsigned long long perft = 0;
 
-void search(Board& pos, int depth)
+void pf(Board& pos, int depth)
 {
     if (depth == 0 || pos.isOver())
     {
@@ -22,31 +24,42 @@ void search(Board& pos, int depth)
     while (moves[current_move] != Board::invalid_index)
     {
         pos.do_move(moves[current_move++]);
-        search(pos, depth - 1);
-        pos.undoMove();
+        pf(pos, depth - 1);
+        pos.undo_move();
     }
     if (!num_moves)
     {
         pos.do_move(Board::invalid_index);
-        search(pos, depth - 1);
-        pos.undoMove();
+        pf(pos, depth - 1);
+        pos.undo_move();
     }
 }
  
 int main()
 {
+    search::init();
+    while (true)
+    {
+
+    
     unsigned long long d = 0;
     Board b;
     int sum = 0;
     int games = 0;
-    auto start = high_resolution_clock::now();
-    search(b, 12);
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<seconds>(stop - start);
-    d += duration.count();
-    std::cout << perft << "\n";
-    std::cout << perft/duration.count() << "\n";
-    
-    b.printBoard();
+    while (!b.isOver())
+    {
+        std::cout << "\n\n\nRandom Mover Move:\n";
+        b.do_random_move();
+        b.print_board();
+        std::cout << "\nsearch move: ";
+        const int move = search::search_move(b, 11);
+        std::cout << move << "\n";
+        b.do_move_is_legal(move);
+        b.print_board();
+    }
+    std::cout << "score : " << b.getScore() << "\n";
+    b.print_board();
+    system("pause");
+    }
    // std::cout << "took " << d / 10 << "\n";
 }

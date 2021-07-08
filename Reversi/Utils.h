@@ -1,5 +1,6 @@
 #pragma once
 #include "BitUtilities.h"
+#include <iostream>
 #include <Eigen/Core>
 enum Color
 {
@@ -111,31 +112,37 @@ inline constexpr int capture_iteration_count[64][DIRECTION_NONE] =
 {0,0,0,7,7,7,0,0}
 };
 
-inline static unsigned long x =
-((__rdtsc() *
-	(_lzcnt_u32(x)+ 1234) *
-	(unsigned long long)capture_iteration_count) ^
-	0xABCDABCDABCD) ^
-	__rdtsc() ^
-	(int)"lol" ^
-	(((long long)"zaba") << 32) //^
-	//__readmsr(__rdtsc()) ^
-	//_rdpid_u32() ^
-	//__readcr0()
 
 
-
-, y = 362436069, z = 521288629;
-inline constexpr unsigned long rng() 
+namespace rng
 {
-	x ^= x << 16;
-	x ^= x >> 5;
-	x ^= x << 1;
+	//use x as the seed for the rng
+	extern inline unsigned long x = 
+		((__rdtsc() *
+			(_lzcnt_u32(x) + 1234) *
+			(unsigned long long)capture_iteration_count) ^
+			0xABCDABCDABCD) ^
+		__rdtsc() ^
+		(int)"lol" ^
+		(((long long)"zaba") << 32) 
 
-	unsigned long t = x;
-	x = y;
-	y = z;
-	z = t ^ x ^ y;
 
-	return z;
+
+		, y = 362436069, z = 521288629;
+	extern constexpr inline unsigned long rng()
+	{
+		x ^= x << 16;
+		x ^= x >> 5;
+		x ^= x << 1;
+
+		unsigned long t = x;
+		x = y;
+		y = z;
+		z = t ^ x ^ y;
+
+		return z;
+	}
+
+
+
 }
