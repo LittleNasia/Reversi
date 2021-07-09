@@ -38,28 +38,43 @@ void pf(Board& pos, int depth)
 int main()
 {
     search::init();
-    while (true)
-    {
-
-    
-    unsigned long long d = 0;
+    int wins = 0;
+    int loses = 0;
     Board b;
-    int sum = 0;
-    int games = 0;
-    while (!b.isOver())
+    for (int depth = 10; depth < 11; depth++)
     {
-        std::cout << "\n\n\nRandom Mover Move:\n";
-        b.do_random_move();
-        b.print_board();
-        std::cout << "\nsearch move: ";
-        const int move = search::search_move(b, 11);
-        std::cout << move << "\n";
-        b.do_move_is_legal(move);
-        b.print_board();
+        int wins = 0;
+        int loses = 0;
+        for (int game = 0; game < 1000; game++)
+        {
+            unsigned long long d = 0;
+            int sum = 0;
+            int games = 0;
+            while (!b.isOver())
+            {
+                //std::cout << "\n\n\nRandom Mover Move:\n";
+                //b.do_random_move();
+                b.print_board();
+               // std::cout << "\nsearch move: ";
+                const int move = search::search_move(b, 17);
+                //std::cout << "\n\n";
+                //std::cout << move << "\n";
+                b.do_move_is_legal(move);
+                b.print_board();
+            }
+            //std::cout << "score : " << b.getScore() << "\n";
+            if (b.getScore() < 0)
+            {
+                wins++;
+            }
+            else
+                loses++;
+            b.new_game();
+            //b.print_board();
+            //system("pause");
+        } 
+        std::cout << "depth: " << depth << "    " << wins << "/" << loses << "\n";
     }
-    std::cout << "score : " << b.getScore() << "\n";
     b.print_board();
-    system("pause");
-    }
    // std::cout << "took " << d / 10 << "\n";
 }
