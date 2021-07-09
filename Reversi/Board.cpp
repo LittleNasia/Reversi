@@ -11,7 +11,7 @@ Board::Board()
 void Board::print_board()
 {
 	int index = 63;
-	getMoves();
+	get_moves();
 	int x = available_moves[0];
 	int moves_i = 0;
 	while (x != invalid_index)
@@ -27,11 +27,11 @@ void Board::print_board()
 		for (int col = 0; col < cols; col++)
 		{
 			std::cout << "[";
-			if ((1ULL << index) & m_bb[COLOR_BLACK])
+			if ((1ULL << index) & bb[COLOR_BLACK])
 			{
 				std::cout << "X";
 			}
-			else if ((1ULL << index) & m_bb[COLOR_WHITE])
+			else if ((1ULL << index) & bb[COLOR_WHITE])
 			{
 				std::cout << "O";
 			}
@@ -56,25 +56,25 @@ void Board::print_board()
 void Board::new_game()
 {
 	side_to_move = COLOR_BLACK;
-	m_nn_input.setZero();
-	m_nn_input(3, 3) = 1;
-	m_nn_input(4, 4) = 1;
-	m_nn_input(3, 4 + cols) = 1;
-	m_nn_input(4, 3 + cols) = 1;
-	m_bb[COLOR_BLACK] = 0 | (1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4));
-	m_bb[COLOR_WHITE] = 0 | (1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3));
-	m_ply = 0;
+	nn_input.setZero();
+	nn_input(3, 3) = 1;
+	nn_input(4, 4) = 1;
+	nn_input(3, 4 + cols) = 1;
+	nn_input(4, 3 + cols) = 1;
+	bb[COLOR_BLACK] = 0 | (1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4));
+	bb[COLOR_WHITE] = 0 | (1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3));
+	ply = 0;
 	forced_passes = 0;
 	result = COLOR_NONE;
-	move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
-	move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
-	move_history[m_ply].forced_passes = 0;
+	move_history[ply].white_bb = bb[COLOR_WHITE];
+	move_history[ply].black_bb = bb[COLOR_BLACK];
+	move_history[ply].forced_passes = 0;
 }
 
-const uint8_t* Board::getMoves()
+const uint8_t* Board::get_moves()
 {
-	const auto& own_bb = m_bb[side_to_move];
-	const auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
+	const auto& own_bb = bb[side_to_move];
+	const auto& enemy_bb = bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
 	const auto& empty = ~(own_bb | enemy_bb);
 
 	//bitboard containing the bits for each legal move
@@ -162,8 +162,8 @@ void Board::capture(const uint8_t move)
 	{
 		forced_passes = 0;
 		uint32_t move_masks = 0;
-		auto& own_bb = m_bb[side_to_move];
-		auto& enemy_bb = m_bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
+		auto& own_bb = bb[side_to_move];
+		auto& enemy_bb = bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
 		const auto& empty = ~(own_bb | enemy_bb);
 		own_bb ^= (1ULL << move);
 		constexpr bitboard(*direction_functions[])(const bitboard) = {
@@ -226,28 +226,28 @@ void Board::capture(const uint8_t move)
 				}
 			}
 		}
-		move_history[m_ply].forced_passes = 0;
+		move_history[ply].forced_passes = 0;
 	}
 	else
 	{
 		forced_passes++;
-		move_history[m_ply].forced_passes = forced_passes;
+		move_history[ply].forced_passes = forced_passes;
 	}
-	move_history[m_ply].white_bb = m_bb[COLOR_WHITE];
-	move_history[m_ply].black_bb = m_bb[COLOR_BLACK];
+	move_history[ply].white_bb = bb[COLOR_WHITE];
+	move_history[ply].black_bb = bb[COLOR_BLACK];
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 }
 
 void Board::do_move(const int square)
 {
-	m_ply++;
+	ply++;
 	capture(square);
 }
 
 const bool Board::do_move_is_legal(const int square)
 {
-	m_ply++;
-	getMoves();
+	ply++;
+	get_moves();
 	int curr_move = available_moves[0];
 	int index = 0;
 	bool found = 0;
@@ -289,8 +289,8 @@ const bool Board::do_move_is_legal(const int square)
 
 void Board::do_random_move()
 {
-	m_ply++;
-	getMoves();
+	ply++;
+	get_moves();
 	if (num_moves)
 		capture(available_moves[rng::rng() % num_moves]);
 	else
@@ -301,8 +301,8 @@ void Board::undo_move()
 {
 	forced_passes = std::max(forced_passes - 1, 0LL);
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
-	m_ply--;
-	m_bb[COLOR_WHITE] = move_history[m_ply].white_bb;
-	m_bb[COLOR_BLACK] = move_history[m_ply].black_bb;
-	forced_passes = move_history[m_ply].forced_passes;
+	ply--;
+	bb[COLOR_WHITE] = move_history[ply].white_bb;
+	bb[COLOR_BLACK] = move_history[ply].black_bb;
+	forced_passes = move_history[ply].forced_passes;
 }

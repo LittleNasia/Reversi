@@ -16,7 +16,7 @@ inline const int evaluate(const Board& b)
 	const bitboard white_bb = b.get_board()[COLOR_WHITE];
 
 	//black side to move perspective
-	int total_score =  b.getScore();
+	int total_score =  b.get_score();
 
 	//center 16 score
 	int center_16_score =  (__popcnt64(black_bb & center_16_bitmask) - __popcnt64(white_bb & center_16_bitmask)) * 1;
@@ -33,5 +33,5 @@ inline const int evaluate(const Board& b)
 	total_score += center_16_score + center_4_score + corner_score + C_squares_punishment;
 
 	//side to move perspective
-	return total_score * ((b.getSideToMove() == COLOR_BLACK) ? 1 : -1);
+	return total_score * ((b.get_side_to_move() == COLOR_BLACK) ? 1 : -1);
 }

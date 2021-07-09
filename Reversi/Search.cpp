@@ -68,7 +68,7 @@ namespace search
 				board[color] ^= (1ULL << index);
 			}
 		}
-		posKey ^= ZoribstSideToMove[b.getSideToMove()];
+		posKey ^= ZoribstSideToMove[b.get_side_to_move()];
 		return posKey;
 	}
 
@@ -176,15 +176,15 @@ namespace search
 	int search(Board& b, int depth, int alpha, int beta, SearchInfo& s, bool doNull = true)
 	{
 		
-		if (b.isOver())
+		if (b.is_over())
 		{
 			nodes++;
-			int score = b.getScore();
+			int score = b.get_score();
 			if (score)
 			{
 				score = ((score > 0) ? value_win : -value_win);
 				//side to move perspective
-				return score * ((b.getSideToMove() == COLOR_BLACK) ? 1 : -1);
+				return score * ((b.get_side_to_move() == COLOR_BLACK) ? 1 : -1);
 			}
 			else
 			{
@@ -208,8 +208,8 @@ namespace search
 		//initialize the array that holds move indices, so that if a move ordering change occurs, it will be reflected in this array
 		Board::moves_array move_indices = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
 
-		std::memcpy(moves, b.getMoves(), sizeof(Board::moves_array));
-		const int numMoves = b.getNumMoves();
+		std::memcpy(moves, b.get_moves(), sizeof(Board::moves_array));
+		const int numMoves = b.get_num_moves();
 
 		
 
@@ -272,19 +272,20 @@ namespace search
 				//we already incremented current_move, so we have to subtract 1
 				best_move = move_indices[current_move - 1];
 				best_score = score;
-			}
-			if (score > alpha)
-			{
-				alpha = score;
-				searching_pv = false;
-				TT_flag = TT_entry::flag_exact;
-			}
-			if (alpha >= beta)
-			{
-				s.killers[1][s.ply] = s.killers[0][s.ply];
-				s.killers[0][s.ply] = best_move;
-				transposition_table.store({ key, best_move, beta, depth, TT_entry::flag_beta });
-				return beta;
+			
+				if (score > alpha)
+				{
+					alpha = score;
+					searching_pv = false;
+					TT_flag = TT_entry::flag_exact;
+					if (alpha >= beta)
+					{
+						s.killers[1][s.ply] = s.killers[0][s.ply];
+						s.killers[0][s.ply] = best_move;
+						transposition_table.store({ key, best_move, beta, depth, TT_entry::flag_beta });
+						return beta;
+					}
+				}
 			}
 			//we don't check invalid_index (passing moves), unless it is the only possible move
 			//if it's the only possible move, it has just been evaluated, which also means numMoves is equal to 0
@@ -300,7 +301,7 @@ namespace search
 
 	int search_move(Board& b, int depth)
 	{
-		if (b.isOver())
+		if (b.is_over())
 		{
 			//std::cout <<  " the board is finished, returning ";
 			return 64;
@@ -329,15 +330,15 @@ namespace search
 				const auto& entry = transposition_table.get(key, found);
 				if (found)
 				{
-					std::cout << (int)b.getMoves()[entry.move] << " ";
+					std::cout << (int)b.get_moves()[entry.move] << " ";
 					num_moves++;
-					b.do_move(b.getMoves()[entry.move]);
+					b.do_move(b.get_moves()[entry.move]);
 				}
 				else
 				{
 					break;
 				}
-				if (b.isOver())
+				if (b.is_over())
 				{
 					break;
 				}
@@ -370,9 +371,9 @@ namespace search
 			std::cout << "entry key is " << entry.posKey << "\n";
 		}
 
-		//std::cout << "\nmove is " << (int)b.getMoves()[m] << " with index " << m << "\n";
+		//std::cout << "\nmove is " << (int)b.get_moves()[m] << " with index " << m << "\n";
 		//std::cout << "\nscore is " << entry.score << "\n";
 		//transposition_table.clear();
-		return b.getMoves()[m];
+		return b.get_moves()[m];
 	}
 }
