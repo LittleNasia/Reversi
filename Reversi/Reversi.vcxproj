@@ -157,7 +157,6 @@
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="Evaluate.cpp" />
-    <ClCompile Include="MostPiecesTaken.cpp" />
     <ClCompile Include="Reversi.cpp" />
     <ClCompile Include="Search.cpp" />
     <ClCompile Include="TT.cpp" />
@@ -167,7 +166,6 @@
     <ClInclude Include="Board.h" />
     <ClInclude Include="Evaluate.h" />
     <ClInclude Include="Search.h" />
-    <ClInclude Include="MostPiecesTaken.h" />
     <ClInclude Include="TT.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>

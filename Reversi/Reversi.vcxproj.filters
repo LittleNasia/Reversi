@@ -16,9 +16,6 @@
     <Filter Include="SimplePlayers">
       <UniqueIdentifier>{4cc9e3d1-f17d-40f6-a04d-61b914e9ada4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SimplePlayers\MostPiecesTaken">
-      <UniqueIdentifier>{c500903b-3667-4fe2-8c43-ca0c036e46be}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Reversi.cpp">
@@ -26,9 +23,6 @@
     </ClCompile>
     <ClCompile Include="Board.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MostPiecesTaken.cpp">
-      <Filter>SimplePlayers\MostPiecesTaken</Filter>
     </ClCompile>
     <ClCompile Include="Search.cpp">
       <Filter>Source Files</Filter>
@@ -49,9 +43,6 @@
     </ClInclude>
     <ClInclude Include="BitUtilities.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MostPiecesTaken.h">
-      <Filter>SimplePlayers\MostPiecesTaken</Filter>
     </ClInclude>
     <ClInclude Include="Search.h">
       <Filter>Header Files</Filter>
