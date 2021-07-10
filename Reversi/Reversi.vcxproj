@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="Evaluate.cpp" />
+    <ClCompile Include="NN_accumulator.cpp" />
     <ClCompile Include="Reversi.cpp" />
     <ClCompile Include="Search.cpp" />
     <ClCompile Include="TT.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="BitUtilities.h" />
     <ClInclude Include="Board.h" />
     <ClInclude Include="Evaluate.h" />
+    <ClInclude Include="NN_accumulator.h" />
     <ClInclude Include="Search.h" />
     <ClInclude Include="TT.h" />
     <ClInclude Include="Utils.h" />

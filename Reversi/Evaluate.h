@@ -10,25 +10,50 @@ constexpr unsigned long long C_squares = (1ULL << 62) | (1ULL << 55) | (1ULL << 
 
 
 
-inline const int evaluate(const Board& b)
+inline const int evaluate(Board& b)
 {
 	const bitboard black_bb = b.get_board()[COLOR_BLACK];
 	const bitboard white_bb = b.get_board()[COLOR_WHITE];
 
 	//black side to move perspective
-	int total_score =  b.get_score();
+
+
+	int white_moves;
+	int black_moves;
+
+	b.get_moves();
+	if (b.get_side_to_move() == COLOR_BLACK)
+	{
+		 black_moves = b.get_num_moves() * 7;
+	}
+	else
+	{
+		white_moves = b.get_num_moves() * 7;
+	}
+	b.do_move(Board::invalid_index);
+	b.get_moves();
+	if (b.get_side_to_move() == COLOR_BLACK)
+	{
+		black_moves = b.get_num_moves() * 7;
+	}
+	else
+	{
+		white_moves = b.get_num_moves() * 7;
+	}
+	b.undo_move();
+	int total_score = black_moves - white_moves;
 
 	//center 16 score
-	int center_16_score =  (__popcnt64(black_bb & center_16_bitmask) - __popcnt64(white_bb & center_16_bitmask)) * 1;
+	int center_16_score = 0;//(__popcnt64(black_bb & center_16_bitmask) - __popcnt64(white_bb & center_16_bitmask)) * 1;
 
 	// center 4 score 
-	int center_4_score = (__popcnt64(black_bb & center_4_bitmask) - __popcnt64(white_bb & center_4_bitmask)) * 1;
+	int center_4_score = 0;//(__popcnt64(black_bb & center_4_bitmask) - __popcnt64(white_bb & center_4_bitmask)) * 1;
 
 	//corners score
-	int corner_score = (__popcnt64(black_bb & corners) - __popcnt64(white_bb & corners)) * 25;
+	int corner_score = (__popcnt64(black_bb & corners) - __popcnt64(white_bb & corners)) * 35;
 
 	//C-squares punishment (smaller than corners, so that taking corners is always beneficial, but not C squares alone)
-	int C_squares_punishment = (__popcnt64(black_bb & corners) - __popcnt64(white_bb & corners)) * -6;
+	int C_squares_punishment = 0;// (__popcnt64(black_bb & corners) - __popcnt64(white_bb & corners)) * -3;
 
 	total_score += center_16_score + center_4_score + corner_score + C_squares_punishment;
 

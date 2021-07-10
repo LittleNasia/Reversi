@@ -122,32 +122,8 @@ namespace search
 				//std::cout << (int)moves[move_indices[index]] << "\n";
 			}
 		}
-		//check for killers
-		//doesn't seem to give any kind of gain in reversi, so it's not used
-		//or maybe I did it wrong lol whatever
-		bool killer_moves[] = { false, false };
-		int killer_indices[] = { 0,0 };
-		for (int index = heuristics_used; index < (num_moves); index++)
-		{
-			for (int killer = 0; killer < 2; killer++)
-			{
-				if (move_indices[index] == s.killers[killer][s.ply])
-				{
-					killer_moves[killer] = true;
-					killer_indices[killer] = move_indices[index];
-				}
-			}
-		}
-		for (int killer = 0; killer < 2; killer++)
-		{
-			if (killer_moves[killer])
-			{
-				//std::swap(move_indices[heuristics_used++], move_indices[killer_indices[killer]]);
-			}
-		}
-		//use any other heuristics
 
-		
+		//use any other heuristics
 		int c_square_moves = 0;
 		bool has_62 = false;
 		//order the moves by searching moves on C-squares last
@@ -230,10 +206,10 @@ namespace search
 		}
 
 		//null move pruning
-		if (numMoves && doNull && depth >= 4)
+		if ((numMoves) && (doNull) && (depth >= 5))
 		{
 			b.do_move(Board::invalid_index);
-			int value = -search(b, depth - 3, -beta, -beta + 1, s, false);
+			int value = -search(b, depth - 4, -beta, -beta + 1, s, false);
 			b.undo_move();
 			if (value >= beta)
 			{
@@ -284,8 +260,6 @@ namespace search
 					TT_flag = TT_entry::flag_exact;
 					if (alpha >= beta)
 					{
-						s.killers[1][s.ply] = s.killers[0][s.ply];
-						s.killers[0][s.ply] = best_move;
 						transposition_table.store({ key, best_move, beta, depth, TT_entry::flag_beta });
 						return beta;
 					}
@@ -308,7 +282,6 @@ namespace search
 	{
 		if (b.is_over())
 		{
-			//std::cout <<  " the board is finished, returning ";
 			return 64;
 		}
 		auto start_iterative = high_resolution_clock::now();

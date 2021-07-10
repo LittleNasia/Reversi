@@ -146,3 +146,14 @@ namespace rng
 
 
 }
+
+
+namespace NN
+{
+	//includes input, but not output
+	constexpr int num_layers = 4;
+	constexpr int layer_sizes[4] =
+	{
+		64 * 4, 32, 32, 1
+	};
+}

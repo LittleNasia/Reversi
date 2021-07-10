@@ -26,6 +26,7 @@ void TT::store(const TT_entry& entry)
 			auto& bucket_elem = bucket.elements[bucket_index];
 			//replace the same position, or replace based on depth
 			//higher depth elements are more important, replace based on that 
+			//the same position replacement is mostly to guarantee we have the rootPos stored at the end of the serach, no matter what
 			if((bucket_elem.posKey == entry.posKey) || (bucket_elem.depth <= entry.depth))
 			{
 				bucket_elem = entry;
