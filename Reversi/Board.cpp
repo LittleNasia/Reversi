@@ -71,7 +71,7 @@ void Board::new_game()
 	move_history[ply].forced_passes = 0;
 }
 
-const uint8_t* Board::get_moves()
+const Board::move_type* Board::get_moves()
 {
 	const auto& own_bb = bb[side_to_move];
 	const auto& enemy_bb = bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];

@@ -22,10 +22,12 @@ public:
 	{
 		return row * cols + col;
 	}
+	//using 8 bit per move seems pretty nice storage-wise, allows to copy the entire moves-array so much faster
+	using move_type = uint8_t;
 	using input_type = Eigen::Matrix<ScalarType, rows, cols * NN_input_channels>;
 	//this assumes that there will never be more than 32 moves in a position
 	//32 is a pretty nice number, that 
-	using moves_array = uint8_t[rows * cols / 2];
+	using moves_array = move_type[rows * cols / 2];
 	//does NOT check for legality of the move (only to be used from search, in conjecture with get_moves())
 	void do_move(const int square);
 	//does check for legality of the move
@@ -35,7 +37,7 @@ public:
 	//gets the available moves list and then makes the move
 	void do_random_move();
 	//returns the pointer to the available moves array
-	const uint8_t* get_moves();
+	const move_type* get_moves();
 	void print_board();
 	void new_game();
 	void undo_move();

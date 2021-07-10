@@ -14,7 +14,7 @@ struct TT_entry
 
 struct Bucket
 {
-	static constexpr int max_elements = 1;
+	static constexpr int max_elements = 2;
 	int curr_elements = 0;
 	TT_entry elements[max_elements];
 };
@@ -23,7 +23,7 @@ struct Bucket
 class TT
 {
 public:
-	constexpr static unsigned int size = 6000000;
+	constexpr static unsigned int size = 2<<20;
 	void clear();
 	void store(const TT_entry& entry);
 	const TT_entry& get(const TT_entry& entry, bool& found);

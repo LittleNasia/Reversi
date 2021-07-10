@@ -104,7 +104,6 @@ namespace search
 		//TT move should be the absolute first move that should be searched
 		//TT exists for a reason lol
 		int heuristics_used = 0;
-		int moves_ordered = 0;
 		if (found_tt_entry)
 		{
 			std::swap(move_indices[0], move_indices[entry.move]);
@@ -124,7 +123,8 @@ namespace search
 			}
 		}
 		//check for killers
-		//doesn't seem to give any kind of gain in reversi
+		//doesn't seem to give any kind of gain in reversi, so it's not used
+		//or maybe I did it wrong lol whatever
 		bool killer_moves[] = { false, false };
 		int killer_indices[] = { 0,0 };
 		for (int index = heuristics_used; index < (num_moves); index++)
@@ -145,9 +145,9 @@ namespace search
 				//std::swap(move_indices[heuristics_used++], move_indices[killer_indices[killer]]);
 			}
 		}
-
-
 		//use any other heuristics
+
+		
 		int c_square_moves = 0;
 		bool has_62 = false;
 		//order the moves by searching moves on C-squares last
@@ -246,12 +246,15 @@ namespace search
 
 		bool searching_pv = true;
 		int current_move = 0;
+		//iterate over moves 
 		while (true)
 		{
 			s.ply++;
 			b.do_move(moves[move_indices[current_move++]]);
-			int score;
+			
+
 			//principal variation search
+			int score;
 			if (searching_pv)
 			{
 				score = -search(b, depth - 1, -beta, -alpha,s);
@@ -264,6 +267,7 @@ namespace search
 					score = -search(b, depth - 1, -beta, -alpha,s);
 				}
 			}
+
 			b.undo_move();
 			s.ply--;
 
@@ -287,6 +291,7 @@ namespace search
 					}
 				}
 			}
+
 			//we don't check invalid_index (passing moves), unless it is the only possible move
 			//if it's the only possible move, it has just been evaluated, which also means numMoves is equal to 0
 			//we break if the next move is a passing move, or if there are no moves
@@ -299,7 +304,7 @@ namespace search
 		return alpha;
 	}
 
-	int search_move(Board& b, int depth)
+	int search_move(Board& b, int depth, bool print = true)
 	{
 		if (b.is_over())
 		{
@@ -316,23 +321,28 @@ namespace search
 			search(b, d, -value_inf, value_inf,s, false);
 			auto stop = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(stop - start);
-			int num_moves = 0;
-			int score = -value_inf;
-			bool found;
+
+			
 			unsigned long long key = hash(b);
+			bool found;
 			const auto& entry = transposition_table.get(key, found);
-			score = entry.score;
-			std::cout << "depth: " << d << " moves : ";
+			int score = entry.score;
+			if(print)
+				std::cout << "depth: " << d << " moves : ";
+			int num_moves = 0;
+			
 			while (true)
 			{
 				unsigned long long key = hash(b);
-				bool found = false;
+				found = false;
 				const auto& entry = transposition_table.get(key, found);
 				if (found)
 				{
-					std::cout << (int)b.get_moves()[entry.move] << " ";
+					const auto moves = b.get_moves();
+					if (print)
+						std::cout << (int)moves[entry.move] << " ";
 					num_moves++;
-					b.do_move(b.get_moves()[entry.move]);
+					b.do_move(moves[entry.move]);
 				}
 				else
 				{
@@ -349,21 +359,24 @@ namespace search
 			}
 			auto now = high_resolution_clock::now();
 			auto search_duration_so_far = duration_cast<microseconds>(now - start_iterative);
-			std::cout << " nodes: " << nodes << "  nodes per second: " << (int)((float)nodes / (((float)duration.count() + 1) / 1000000)) << "  score: " << score << "  time elapsed: "
-				<< ((float)search_duration_so_far.count() + 1) / 1000000 << "\n";;
+			if (print)
+				std::cout << " nodes: " << nodes << "  nodes per second: " << (int)((float)nodes / (((float)duration.count() + 1) / 1000000)) << "  score: " << score << "  time elapsed: "
+					<< ((float)search_duration_so_far.count() + 1) / 1000000 << "\n";;
 			nodes = 0;
 		}
 
 
 		unsigned long long key = hash(b);
-		int m = 64;
+		int best_move_index = 64;
 		bool found = false;
 		const auto& entry = transposition_table.get(key, found);
 		if (found)
 		{
-			m = entry.move;
+			best_move_index = entry.move;
 			//std::cout <<"\nentry move "<< entry.move << "\n";
 		}
+		//this should never happen, root pos will always be added last to the TT, and it will always have the highest priority
+		//its depth is simply the highest possible
 		else
 		{
 			std::cout << "root pos not found in tt\n";
@@ -374,6 +387,6 @@ namespace search
 		//std::cout << "\nmove is " << (int)b.get_moves()[m] << " with index " << m << "\n";
 		//std::cout << "\nscore is " << entry.score << "\n";
 		//transposition_table.clear();
-		return b.get_moves()[m];
+		return b.get_moves()[best_move_index];
 	}
 }

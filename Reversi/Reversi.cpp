@@ -39,7 +39,7 @@ int main()
     Board b;
     int wins = 0;
     int loses = 0;
-    for (int game = 0; game < 1; game++)
+    for (int game = 0; game < 1000; game++)
     {
         unsigned long long d = 0;
         int sum = 0;
@@ -47,11 +47,11 @@ int main()
         while (!b.is_over())
         {
             //std::cout << "\n\n\nRandom Mover Move:\n";
-            //b.do_random_move();
-            b.print_board();
+           //b.do_random_move();
+            //b.print_board();
             // std::cout << "\nsearch move: ";
-            const int move = search::search_move(b, 10);
-            //std::cout << "\n\n";
+            const int move = search::search_move(b, 17, true);
+            std::cout << "\n\n";
             //std::cout << move << "\n";
             b.do_move(move);
             //print_board();
@@ -67,7 +67,7 @@ int main()
         //b.print_board();
         //system("pause");
     } 
-    //std::cout << "depth: " << depth << "    " << wins << "/" << loses << "\n";
+    std::cout << "depth: " << 8 << "    " << wins << "/" << loses << "\n";
     
     b.print_board();
    // std::cout << "took " << d / 10 << "\n";
