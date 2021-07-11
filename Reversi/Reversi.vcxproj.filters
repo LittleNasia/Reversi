@@ -59,5 +59,8 @@
     <ClInclude Include="NN_accumulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ClippedReLU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

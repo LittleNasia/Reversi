@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cstring>
 #include "Search.h"
-
+#include "ClippedReLU.h"
 using namespace std::chrono;
 
 unsigned long long perft = 0;
@@ -42,7 +42,7 @@ int main()
     { 
         int wins = 0;
         int loses = 0;
-    for (int game = 0; game < 4000; game++)
+    for (int game = 0; game < 50000; game++)
     {
         int sum = 0;
         int games = 0;

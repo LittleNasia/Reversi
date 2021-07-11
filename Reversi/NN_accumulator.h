@@ -8,7 +8,7 @@ namespace NN
 	//uses int8 weights, clipped ReLU in range 0..1, 
 	struct NN_accumulator
 	{
-		uint16_t output[COLOR_NONE][layer_sizes[1]];
+		int16_t output[COLOR_NONE][layer_sizes[1]];
 		int8_t weights[layer_sizes[0]][layer_sizes[1]];
 
 		void update_accumulator(const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move)
@@ -40,6 +40,8 @@ namespace NN
 					//current side_to_move pieces appear to be opposite_side from the perspective of the opposite_side
 					//we use the bit_index + 64, as it's the one that corresponds to opponent_pieces input 
 					output[opposite_side][neuron] += weights[bit_index + 64][neuron];
+
+
 				}
 			}
 
@@ -62,6 +64,22 @@ namespace NN
 				}
 			}
 
+
+			//we now update the prespective independent inputs, combined white/black features and empty square features
+			//the piece that was just placed is the only addition to combined input
+			//it's also the only square that gets taken away from the empty squares input
+			bitboard new_move = added_pieces & ~captured_pieces;
+			const int new_move_index = _lzcnt_u64(new_move) ^ 63;
+			for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+			{
+				//here we use the index + 64*2, because taken square features are the third set of features (each set has size 64)
+				output[side_to_move][neuron] += weights[new_move_index + 64 * 2][neuron];
+				output[opposite_side][neuron] += weights[new_move_index + 64 * 2][neuron];
+
+				//here we use the index + 64*3, because free square features are the third set of features (each set has size 64)
+				output[side_to_move][neuron] -= weights[new_move_index + 64 * 3][neuron];
+				output[opposite_side][neuron] -= weights[new_move_index + 64 * 3][neuron];
+			}
 		}
 	};
 

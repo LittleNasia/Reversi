@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClInclude Include="BitUtilities.h" />
     <ClInclude Include="Board.h" />
+    <ClInclude Include="ClippedReLU.h" />
     <ClInclude Include="Evaluate.h" />
     <ClInclude Include="NN_accumulator.h" />
     <ClInclude Include="Search.h" />
