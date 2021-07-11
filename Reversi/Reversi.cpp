@@ -4,16 +4,20 @@
 #include <cstring>
 #include "Search.h"
 #include "ClippedReLU.h"
+#include <algorithm>
 using namespace std::chrono;
 
 unsigned long long perft = 0;
 
 void pf(Board& pos, int depth)
 {
+    
+
     if (depth == 0 || pos.is_over())
     {
         return;
     }
+
     perft++;
     uint8_t moves[Board::rows * Board::cols / 2];
     std::memcpy(moves, pos.get_moves(), Board::rows * Board::cols / 2);
@@ -35,6 +39,29 @@ void pf(Board& pos, int depth)
  
 int main()
 {
+    NN::NN_accumulator acc;
+    for (auto& val : acc.output[0])
+    {
+        val = rng::rng() & 0x81FF;
+    }
+    for (auto& val : acc.output[1])
+    {
+        val = rng::rng();
+    }
+    NN::ClippedReLU<32> relu;
+    std::cout << "expected output\n";
+    for (auto& val : acc.output[0])
+    {
+        std::cout << std::clamp(val,(int16_t)0, (int16_t)127) << " ";
+    }
+    std::cout << "\n\n";
+    relu.forward(acc, COLOR_BLACK);
+    std::cout << "actual output\n";
+    for (auto& val : relu.output)
+    {
+        std::cout << (int)val << " ";
+    }
+    std::cout << "\n";
     search::init();
     Board b;
    
