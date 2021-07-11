@@ -23,7 +23,7 @@ namespace NN
 			for (int pack = 0; pack < size / int8_pack_size; pack++)
 			{
 				//accumulator data has size "size", there are size/8 packs, we load two of them into registers
-				//we multiply  pack by two, because 
+				//we multiply pack variable by two, because the input is 16 bit, so we have to do twice as many loads of twice as small number of integers
 				__m128i accumulator_data_first = _mm_loadu_si128(( __m128i*) (&acc.output[side_to_move][(pack*2) * (int16_pack_size)]));
 				__m128i accumulator_data_second = _mm_loadu_si128(( __m128i*) (&acc.output[side_to_move][((pack * 2) + 1) * (int16_pack_size)]));
 				//we convert and move the 16 bit values to 8 bit 
