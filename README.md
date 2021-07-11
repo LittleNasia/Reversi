@@ -9,3 +9,6 @@ update!!!
 now search with many improvements works as well!! 
 it could be an engine now if you want it to, but it does not follow any protocol and it's pretty bad lol
 eval is whatever random thing I put fast with one goal in mind, and that is being volatile, but also kinda othello related lol
+
+
+it's cutesy though, if it works I'm gonna be proud of it u.u 
