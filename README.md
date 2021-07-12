@@ -32,7 +32,7 @@ it's sooo cutesy, if it works I'm gonna be proud of it u.u
 # Acknowledgements:
 1. xorshift code is taken from https://stackoverflow.com/a/1640399 and slightly modified to fit my needs. 
 2. I studied mainly Andrew Grant's Etheral's code (https://github.com/AndyGrant/Ethereal) of search to better understand the concepts, as they are very well documented.
-3. Alternative to modulo in TT code has been inspired by TerjeKir's Weiss chess engine usage of idea taken from https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/.
+3. Alternative to modulo in TT code has been inspired by TerjeKir's Weiss chess engine (https://github.com/TerjeKir/weiss) usage of idea taken from https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/.
 4. Many basics (such as transposition tables usage) have been studied using Bruce Moreland's now defunct site: http://web.archive.org/web/20071026090003/http://www.brucemo.com/compchess/programming/index.htm
 5. The idea of an incrementally updated accumulator in NN code has been inspired by Stockfish's NNUE code. https://github.com/official-stockfish/Stockfish. The quantization of weights to int8 has also been inspired by Stockfish, however it has been implemented my own way. The idea of using SIMD code has also been inspired by Stockfish, however I implemented it my own way entirely from scratch, which probably makes it terrible but lol that's just life being life. A great resource for understanding NNUE better is https://github.com/glinscott/nnue-pytorch/blob/master/docs/nnue.md.
 6. Chessprogramming wiki has been invaluable in explaining advanced concepts, such as bitboard serialization. https://www.chessprogramming.org/Main_Page
