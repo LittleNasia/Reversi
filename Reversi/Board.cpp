@@ -2,7 +2,7 @@
 #include <iostream>
 #include <functional>
 #include "Search.h"
-
+NN::NN_accumulator accumulator_history[Board::max_ply];
 Board::Board()
 {
 	new_game();
@@ -56,11 +56,6 @@ void Board::print_board()
 void Board::new_game()
 {
 	side_to_move = COLOR_BLACK;
-	nn_input.setZero();
-	nn_input(3, 3) = 1;
-	nn_input(4, 4) = 1;
-	nn_input(3, 4 + cols) = 1;
-	nn_input(4, 3 + cols) = 1;
 	bb[COLOR_BLACK] = 0 | (1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4));
 	bb[COLOR_WHITE] = 0 | (1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3));
 	ply = 0;
@@ -69,6 +64,14 @@ void Board::new_game()
 	move_history[ply].white_bb = bb[COLOR_WHITE];
 	move_history[ply].black_bb = bb[COLOR_BLACK];
 	move_history[ply].forced_passes = 0;
+	for (auto& acc : accumulator_history)
+	{
+		acc.reset();
+	}
+	//update the 0 ply accumulators, by giving them the startpos
+	//we pass the current acc as the old state, because we just need it to be empty
+	accumulator_history[ply].update_accumulator(accumulator_history[ply],(1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4)), 0ULL, COLOR_BLACK);
+	accumulator_history[ply].update_accumulator(accumulator_history[ply],(1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3)), 0ULL, COLOR_WHITE);
 }
 
 const Board::move_type* Board::get_moves()
@@ -156,7 +159,7 @@ const Board::move_type* Board::get_moves()
 }
 
 //only to be called with a move that is legal for sure
-void Board::capture(const uint8_t move)
+void Board::capture(const uint8_t move, const bool update_accumulator)
 {
 	if (move != invalid_index)
 	{
@@ -218,6 +221,8 @@ void Board::capture(const uint8_t move)
 				{
 					enemy_bb ^= victims;
 					own_bb ^= victims;
+					if(update_accumulator)
+						accumulator_history[ply].update_accumulator(accumulator_history[ply-1],victims | (1ULL << move), victims, side_to_move);
 					break;
 				}
 				else if (move_square & empty)
@@ -238,13 +243,13 @@ void Board::capture(const uint8_t move)
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 }
 
-void Board::do_move(const int square)
+void Board::do_move(const int square, const bool update_accumulator)
 {
 	ply++;
-	capture(square);
+	capture(square, update_accumulator);
 }
 
-const bool Board::do_move_is_legal(const int square)
+const bool Board::do_move_is_legal(const int square, const bool update_accumulator)
 {
 	ply++;
 	get_moves();
@@ -264,7 +269,7 @@ const bool Board::do_move_is_legal(const int square)
 	}
 	if (found || (square == invalid_index))
 	{
-		capture(square);
+		capture(square, update_accumulator);
 		return true;
 	}
 	else
@@ -292,9 +297,9 @@ void Board::do_random_move()
 	ply++;
 	get_moves();
 	if (num_moves)
-		capture(available_moves[rng::rng() % num_moves]);
+		capture(available_moves[rng::rng() % num_moves], true);
 	else
-		capture(invalid_index);
+		capture(invalid_index, true);
 }	
 
 void Board::undo_move()

@@ -167,6 +167,7 @@
     <ClInclude Include="Board.h" />
     <ClInclude Include="ClippedReLU.h" />
     <ClInclude Include="Evaluate.h" />
+    <ClInclude Include="LinearLayer.h" />
     <ClInclude Include="NN_accumulator.h" />
     <ClInclude Include="Search.h" />
     <ClInclude Include="TT.h" />

@@ -62,5 +62,8 @@
     <ClInclude Include="ClippedReLU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LinearLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,16 +3,37 @@
 
 namespace NN
 {
-
+	inline int8_t weights[layer_sizes[0]][layer_sizes[1]];
 	//inspired by NNUE, however much simpler 
 	//uses int8 weights, clipped ReLU in range 0..1, 
 	struct NN_accumulator
 	{
 		int16_t output[COLOR_NONE][layer_sizes[1]];
-		int8_t weights[layer_sizes[0]][layer_sizes[1]];
+		
 
-		void update_accumulator(const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move)
+		NN_accumulator()
 		{
+			reset();
+		}
+
+		void reset()
+		{
+			//set everything to zero
+			std::memset(output, 0, sizeof(output));
+			//the board starts as empty before 0 ply, we put weights of empty square features to output
+			for (int index = 0; index < 64; index++)
+			{
+				for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+				{
+					output[COLOR_BLACK][neuron] += weights[index + 64 * 3][neuron];
+					output[COLOR_WHITE][neuron] += weights[index + 64 * 3][neuron];
+				}
+			}
+		}
+
+		void update_accumulator(const NN_accumulator& old_acc, const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move)
+		{
+			//std::memcpy(output, old_acc.output, sizeof(output));
 			const Color opposite_side = ((side_to_move == COLOR_BLACK) ? COLOR_WHITE : COLOR_BLACK);
 			//the input structure is as follows:
 			//the first 64 neurons are the side_to_move pieces (the side that just made the move), followed by 64 other side pieces
@@ -40,8 +61,6 @@ namespace NN
 					//current side_to_move pieces appear to be opposite_side from the perspective of the opposite_side
 					//we use the bit_index + 64, as it's the one that corresponds to opponent_pieces input 
 					output[opposite_side][neuron] += weights[bit_index + 64][neuron];
-
-
 				}
 			}
 
@@ -76,7 +95,7 @@ namespace NN
 				output[side_to_move][neuron] += weights[new_move_index + 64 * 2][neuron];
 				output[opposite_side][neuron] += weights[new_move_index + 64 * 2][neuron];
 
-				//here we use the index + 64*3, because free square features are the third set of features (each set has size 64)
+				//here we use the index + 64*3, because free square features are the fourth set of features (each set has size 64)
 				output[side_to_move][neuron] -= weights[new_move_index + 64 * 3][neuron];
 				output[opposite_side][neuron] -= weights[new_move_index + 64 * 3][neuron];
 			}

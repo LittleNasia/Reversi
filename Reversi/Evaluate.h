@@ -30,7 +30,7 @@ inline const int evaluate(Board& b)
 	{
 		white_moves = b.get_num_moves() * 7;
 	}
-	b.do_move(Board::invalid_index);
+	b.do_move(Board::invalid_index, false);
 	b.get_moves();
 	if (b.get_side_to_move() == COLOR_BLACK)
 	{
