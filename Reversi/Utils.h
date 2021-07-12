@@ -150,7 +150,7 @@ namespace rng
 
 namespace NN
 {
-	//includes input, but not output
+	//includes output, but not input
 	constexpr int num_layers = 4;
 	constexpr int layer_sizes[4] =
 	{

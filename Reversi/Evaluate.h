@@ -1,5 +1,6 @@
 #pragma once
 #include "Board.h"
+#include "BoardEvaluator.h"
 
 constexpr unsigned long long center_16_bitmask = 66229406269440ULL;
 constexpr unsigned long long center_4_bitmask = 103481868288ULL;
@@ -8,7 +9,7 @@ constexpr unsigned long long C_squares = (1ULL << 62) | (1ULL << 55) | (1ULL << 
 (1ULL << 15) | (1ULL << 14) | (1ULL << 6) | (1ULL << 1) | (1ULL << 9) | (1ULL << 8);
 
 
-
+inline NN::BoardEvaluator be;
 
 inline const int evaluate(Board& b)
 {
@@ -41,7 +42,7 @@ inline const int evaluate(Board& b)
 		white_moves = b.get_num_moves() * 7;
 	}
 	b.undo_move();
-	int total_score = black_moves - white_moves;
+	int total_score = black_moves - white_moves + be.Evaluate(b);
 
 	//center 16 score
 	int center_16_score = 0;//(__popcnt64(black_bb & center_16_bitmask) - __popcnt64(white_bb & center_16_bitmask)) * 1;

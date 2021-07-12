@@ -2,7 +2,7 @@
 #include <iostream>
 #include <functional>
 #include "Search.h"
-NN::NN_accumulator accumulator_history[Board::max_ply];
+
 Board::Board()
 {
 	new_game();
@@ -69,7 +69,7 @@ void Board::new_game()
 		acc.reset();
 	}
 	//update the 0 ply accumulators, by giving them the startpos
-	//we pass the current acc as the old state, because we just need it to be empty
+	//we pass the current acc as the old state, because we just need it to be empty and we know that all of them are empty
 	accumulator_history[ply].update_accumulator(accumulator_history[ply],(1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4)), 0ULL, COLOR_BLACK);
 	accumulator_history[ply].update_accumulator(accumulator_history[ply],(1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3)), 0ULL, COLOR_WHITE);
 }

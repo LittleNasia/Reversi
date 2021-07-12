@@ -1,8 +1,7 @@
 #pragma once
 #include "Utils.h"
 #include "NN_accumulator.h"
-
-class PiecePositionContainer;
+#include "ClippedReLU.h"
 
 struct Move
 {
@@ -50,10 +49,12 @@ public:
 	const int is_over() const { return forced_passes > 1; }
 	const int get_ply() const { return ply; }
 	const Color get_side_to_move() const { return side_to_move; }
+	const int16_t* get_current_accumulator() const { return accumulator_history[((ply>0)?(ply - 1):0)].output[side_to_move]; }
 private:
 	void capture(uint8_t move, const bool update_accumulator);
 
 	//stores an accumulator for each of the ply of the game 
+	NN::NN_accumulator accumulator_history[Board::max_ply];
 	Move move_history[max_ply];
 	moves_array available_moves;
 	bitboard bb[COLOR_NONE];

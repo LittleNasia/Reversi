@@ -5,6 +5,7 @@
 #include "Search.h"
 #include "ClippedReLU.h"
 #include "LinearLayer.h"
+#include "BoardEvaluator.h"
 #include <algorithm>
 using namespace std::chrono;
 
@@ -40,44 +41,10 @@ void pf(Board& pos, int depth)
  
 int main()
 {
-    NN::NN_accumulator acc;
-    for (auto& val : acc.output[0])
-    {
-        val = rng::rng() & 0x81FF;
-    }
-    for (auto& val : acc.output[1])
-    {
-        val = rng::rng();
-    }
-    NN::ClippedReLU<32> relu;
-    std::cout << "\n\n";
-    relu.forward(acc, COLOR_BLACK);
-    std::cout << "ReLU output\n";
-    for (auto& val : relu.output)
-    {
-        std::cout << (int)val << " ";
-    }
-    std::cout << "\n";
-    NN::LinearLayer<32,32> layer;
-    layer.forward(relu);
-    std::cout << "\n\expected layer output\n";
-    int sum = 0;
-    for (auto& val : relu.output)
-    {
-        sum += val;
-    }
-    for (auto& val : layer.output)
-    {
-        std::cout << (int)sum << " ";
-    }
-    std::cout << "\n\nlayer output\n";
-    for (auto& val : layer.output)
-    {
-        std::cout << (int)val << " ";
-    }
-    std::cout << "\n\n\n\n";
+    NN::BoardEvaluator be;
     search::init();
     Board b;
+    std::cout << be.Evaluate(b) << "\n";
    
     for(int d=1; d < 10; d++)
     { 
@@ -93,7 +60,7 @@ int main()
             b.do_random_move();
             //b.print_board();
             // std::cout << "\nsearch move: ";
-            const int move = search::search_move(b, 17, true);
+            const int move = search::search_move(b, 25, true);
             //std::cout << "\n\n";
             //std::cout << move << "\n";
             b.do_move(move);

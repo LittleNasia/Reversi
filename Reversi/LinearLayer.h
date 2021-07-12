@@ -11,10 +11,11 @@ namespace NN
 
 		LinearLayer()
 		{
-			std::memset(weights, 64, sizeof(weights));
+			std::memset(weights, 4, sizeof(weights));
 		}
 
-		void forward(const ClippedReLU<in_neurons>& input)
+		template<bool do_zero>
+		void forward(const ClippedReLU<in_neurons, do_zero>& input)
 		{
 			for (int output_neuron = 0; output_neuron < out_neurons; output_neuron++)
 			{
@@ -61,7 +62,6 @@ namespace NN
 					{
 						sum += temp[i];
 					}
-					//std::cout << "\n\n";
 				}
 				//store the sum, ReLU it (so the result isn't negative) and divide it by the scaling factor 64
 				output[output_neuron] = ((sum>0)?sum:0)/64;

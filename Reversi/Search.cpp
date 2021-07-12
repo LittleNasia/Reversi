@@ -14,7 +14,6 @@ namespace search
 	struct SearchInfo
 	{
 		int ply;
-		int killers[2][75];
 	};
 
 	//TT transposition_table;

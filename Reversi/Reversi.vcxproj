@@ -156,6 +156,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
+    <ClCompile Include="BoardEvaluator.cpp" />
     <ClCompile Include="Evaluate.cpp" />
     <ClCompile Include="NN_accumulator.cpp" />
     <ClCompile Include="Reversi.cpp" />
@@ -165,6 +166,7 @@
   <ItemGroup>
     <ClInclude Include="BitUtilities.h" />
     <ClInclude Include="Board.h" />
+    <ClInclude Include="BoardEvaluator.h" />
     <ClInclude Include="ClippedReLU.h" />
     <ClInclude Include="Evaluate.h" />
     <ClInclude Include="LinearLayer.h" />
