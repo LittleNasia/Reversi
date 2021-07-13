@@ -37,6 +37,9 @@ it's sooo cutesy, if it works I'm gonna be proud of it u.u
 5. The idea of an incrementally updated accumulator in NN code has been inspired by Stockfish's NNUE code. https://github.com/official-stockfish/Stockfish. The quantization of weights to int8 has also been inspired by Stockfish, however it has been implemented my own way. The idea of using SIMD code has also been inspired by Stockfish, however I implemented it my own way entirely from scratch, which probably makes it terrible but lol that's just life being life. A great resource for understanding NNUE better is https://github.com/glinscott/nnue-pytorch/blob/master/docs/nnue.md.
 6. Chessprogramming wiki has been invaluable in explaining advanced concepts, such as bitboard serialization. https://www.chessprogramming.org/Main_Page
 7. I often looked at Bluefever Software's series on programming a chess engine in C to compare my implementations and to check if I'm doing things correctly (or if I can improve in some areas). It's a great resource https://www.youtube.com/watch?v=bGAfaepBco4&list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg&index=1.
+8. Move generation has been taken from https://www.gamedev.net/forums/topic/646988-generating-moves-in-reversi/5088518/, will be improved upon but so far it hasn't really been my concern 
+
+All code has been studied and must be fully understood by me before it's implemented, learning is fun.
 
 
 
