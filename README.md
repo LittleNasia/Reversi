@@ -39,7 +39,7 @@ it's sooo cutesy, if it works I'm gonna be proud of it u.u
 7. I often looked at Bluefever Software's series on programming a chess engine in C to compare my implementations and to check if I'm doing things correctly (or if I can improve in some areas). It's a great resource https://www.youtube.com/watch?v=bGAfaepBco4&list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg&index=1.
 8. Move generation has been taken from https://www.gamedev.net/forums/topic/646988-generating-moves-in-reversi/5088518/, will be improved upon but so far it hasn't really been my concern 
 
-All code has been studied and must be fully understood by me before it's implemented, learning is fun.
+All "foreign" code has been studied and must be fully understood by me before it's implemented, learning is fun.
 
 
 
