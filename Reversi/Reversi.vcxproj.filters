@@ -39,7 +39,7 @@
     <ClCompile Include="BoardEvaluator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GameWriter.cpp">
+    <ClCompile Include="GameGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,7 +74,7 @@
     <ClInclude Include="BoardEvaluator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GameWriter.h">
+    <ClInclude Include="GameGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
