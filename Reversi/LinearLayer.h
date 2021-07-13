@@ -64,7 +64,7 @@ namespace NN
 					}
 				}
 				//store the sum, ReLU it (so the result isn't negative) and divide it by the scaling factor 64
-				output[output_neuron] = ((sum>0)?sum:0)/64;
+				output[output_neuron] = ((sum>0)?sum:0)>>6;
 			}
 		}
 	};

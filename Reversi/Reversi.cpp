@@ -54,13 +54,14 @@ int main()
     {
         int sum = 0;
         int games = 0;
+        int score;
         while (!b.is_over())
         {
             //std::cout << "\n\n\nRandom Mover Move:\n";
             b.do_random_move();
             //b.print_board();
             // std::cout << "\nsearch move: ";
-            const int move = search::search_move(b, 25, true);
+            const int move = search::search_move(b, 25, true, score);
             //std::cout << "\n\n";
             //std::cout << move << "\n";
             b.do_move(move);

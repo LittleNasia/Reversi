@@ -20,7 +20,7 @@ namespace search
 	TT transposition_table;
 	unsigned long long Zoribst[64][2];
 	unsigned long long ZoribstSideToMove[2];
-	constexpr int value_inf = 1000000;
+	constexpr int value_inf = 100000;
 	constexpr int value_win = value_inf / 10;
 
 	void init()
@@ -277,7 +277,7 @@ namespace search
 		return alpha;
 	}
 
-	int search_move(Board& b, int depth, bool print = true)
+	int search_move(Board& b, int depth, bool print, int& score)
 	{
 		if (b.is_over())
 		{
@@ -348,7 +348,7 @@ namespace search
 			//std::cout <<"\nentry move "<< entry.move << "\n";
 		}
 		//this should never happen, root pos will always be added last to the TT, and it will always have the highest priority
-		//its depth is simply the highest possible
+		//its depth is simply the highest possible and the same keys gets overwritten even with lower depth
 		else
 		{
 			std::cout << "root pos not found in tt\n";
@@ -359,6 +359,8 @@ namespace search
 		//std::cout << "\nmove is " << (int)b.get_moves()[m] << " with index " << m << "\n";
 		//std::cout << "\nscore is " << entry.score << "\n";
 		//transposition_table.clear();
-		return b.get_moves()[best_move_index];
+
+		//save the searched score, return the move
+		return score= entry.score, b.get_moves()[best_move_index];
 	}
 }

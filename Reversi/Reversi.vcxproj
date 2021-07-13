@@ -158,6 +158,7 @@
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="BoardEvaluator.cpp" />
     <ClCompile Include="Evaluate.cpp" />
+    <ClCompile Include="GameWriter.cpp" />
     <ClCompile Include="NN_accumulator.cpp" />
     <ClCompile Include="Reversi.cpp" />
     <ClCompile Include="Search.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="BoardEvaluator.h" />
     <ClInclude Include="ClippedReLU.h" />
     <ClInclude Include="Evaluate.h" />
+    <ClInclude Include="GameWriter.h" />
     <ClInclude Include="LinearLayer.h" />
     <ClInclude Include="NN_accumulator.h" />
     <ClInclude Include="Search.h" />
