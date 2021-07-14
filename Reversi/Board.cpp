@@ -86,6 +86,7 @@ const Board::move_type* Board::get_moves()
 	//bitboard containing the bits of enemy_bb pieces that are next to our pieces and could (potentially) be flipped
 	bitboard victims = 0;
 
+
 	//test upwards
 	//this gets all pieces directly above our own pieces
 	victims = up(own_bb) & enemy_bb;
@@ -184,6 +185,8 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 			bitboard move_square = (1ULL << move);
 			for (int iteration = 0; iteration < capture_iteration_count[move][direction]; iteration++)
 			{
+				//could've been a switch, but I have a much better idea about what kind of assembly gets generated from ifs
+				//should be identical but oh well, haven't studied switches too much 
 				if (direction == DIRECTION_UP_LEFT)
 				{
 					move_square = left_up(move_square);
@@ -221,7 +224,7 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 				{
 					enemy_bb ^= victims;
 					own_bb ^= victims;
-					if(update_accumulator)
+					if(false)
 						accumulator_history[ply].update_accumulator(accumulator_history[ply-1],victims | (1ULL << move), victims, side_to_move);
 					break;
 				}
@@ -292,14 +295,22 @@ const bool Board::do_move_is_legal(const int square, const bool update_accumulat
 	}
 }
 
-void Board::do_random_move()
+int Board::do_random_move()
 {
 	ply++;
 	get_moves();
+	int move;
 	if (num_moves)
-		capture(available_moves[rng::rng() % num_moves], true);
+	{
+		move = rng::rng() % num_moves;
+		capture(available_moves[move], true);
+	}
 	else
-		capture(invalid_index, true);
+	{
+		move = invalid_index;
+		capture(move, true);
+	}
+	return move;
 }	
 
 void Board::undo_move()

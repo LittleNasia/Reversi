@@ -42,7 +42,7 @@ inline const int evaluate(Board& b)
 		white_moves = b.get_num_moves() * 7;
 	}
 	b.undo_move();
-	int total_score = black_moves - white_moves + be.Evaluate(b);
+	int total_score = black_moves - white_moves;// +be.Evaluate(b);
 
 	//center 16 score
 	int center_16_score = 0;//(__popcnt64(black_bb & center_16_bitmask) - __popcnt64(white_bb & center_16_bitmask)) * 1;

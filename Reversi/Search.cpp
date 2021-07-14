@@ -11,17 +11,13 @@ using namespace std::chrono;
 #include "TT.h"
 namespace search
 {
-	struct SearchInfo
-	{
-		int ply;
-	};
+	
 
 	//TT transposition_table;
 	TT transposition_table;
 	unsigned long long Zoribst[64][2];
 	unsigned long long ZoribstSideToMove[2];
-	constexpr int value_inf = 100000;
-	constexpr int value_win = value_inf / 10;
+	
 
 	void init()
 	{
@@ -98,7 +94,7 @@ namespace search
 		return value_inf;
 	}
 
-	inline constexpr void order_moves(const TT_entry& entry, const Board::moves_array moves, Board::moves_array move_indices, const int num_moves, const bool found_tt_entry, const SearchInfo s, int depth = 0)
+	inline constexpr void order_moves(const TT_entry& entry, const Board::moves_array moves, Board::moves_array move_indices, const int num_moves, const bool found_tt_entry, int depth = 0)
 	{
 		//TT move should be the absolute first move that should be searched
 		//TT exists for a reason lol
@@ -169,7 +165,7 @@ namespace search
 		else if (depth <= 0)
 		{
 			nodes++;
-			const auto score = evaluate(b);
+			const auto score = s.eval_function(b);
 			return score;
 			//return rng::rng()%0xFF;
 		}
@@ -217,7 +213,7 @@ namespace search
 		}
 
 		//order the move indices
-		order_moves(entry, moves, move_indices, numMoves, found, s, depth);
+		order_moves(entry, moves, move_indices, numMoves, found, depth);
 
 		bool searching_pv = true;
 		int current_move = 0;
@@ -277,7 +273,7 @@ namespace search
 		return alpha;
 	}
 
-	int search_move(Board& b, int depth, bool print, int& score)
+	int search_move(Board& b, int depth, bool print, int& score, SearchInfo& s)
 	{
 		if (b.is_over())
 		{
@@ -285,7 +281,6 @@ namespace search
 		}
 		auto start_iterative = high_resolution_clock::now();
 		//iterative deepening
-		SearchInfo s;
 		s.ply = 0;
 		for (int d = 1; d <= depth; d++)
 		{

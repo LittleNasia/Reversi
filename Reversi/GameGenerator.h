@@ -22,7 +22,7 @@ struct Game
 {
 	int8_t moves[70];
 	int16_t scores[70];
-	int game_moves = 1;
+	int game_moves = 0;
 	bool scored = false;
 };
 class GameGenerator
@@ -42,7 +42,7 @@ public:
 	//lambda = 0 -> use purely game results, lambda = 100 -> use purely evaluation, anything inbetween is the interpolation of the two
 	static constexpr int lambda = 80;
 
-	GameWriter();
+	GameGenerator();
 
 	//calling the save_game functions will increment the current_file_index variable
 	//that makes each subsequent call save to a new file, call reset() to reset the counter
@@ -50,7 +50,7 @@ public:
 	//takes the saved games, iterates over positions and games and saves them in the .sbin format
 	//uses search to the given depth to assign the scores
 	void score_and_save(const std::vector<Game>& games, const int scoring_depth);
-	//takes the saved games, iterates over positions and games and saves them in the .sbin format, without assigning the scores
+	//takes the saved games, iterates over positions and games and saves them in the .nsbin format, without assigning the scores
 	void save_without_scoring(const std::vector<Game>& games);
 
 
@@ -59,10 +59,12 @@ public:
 
 	//generates games_per_file games, can generate totally random games (then the following arguments are ignored)
 	//search_depth is the depth of the search used to generate games
-	std::vector<Game> generate_games(const bool use_random_movers, const bool save_scores, const int search_depth);
+	std::vector<Game> generate_games(const bool use_random_movers, const bool save_scores, const int search_depth, int num_threads);
 
 	//resets the internal state, will overwrite the previous game files 
-	void reset();
+	void reset() {
+		current_file_index = 0;
+	}
 private:
 	int current_file_index = 0;
 	const std::string name = "games";

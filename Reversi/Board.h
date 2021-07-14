@@ -35,8 +35,8 @@ public:
 	const bool do_move_is_legal(const int square, const bool update_accumulator = true);
 	//if you want to make a move using coordinates, go ahead, define it first though
 	const bool do_move(const Point target_square);
-	//gets the available moves list and then makes the move
-	void do_random_move();
+	//gets the available moves list and then makes the move, returning the move made
+	int do_random_move();
 	//returns the pointer to the available moves array
 	const move_type* get_moves();
 	void print_board();

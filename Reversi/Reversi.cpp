@@ -55,13 +55,15 @@ int main()
         int sum = 0;
         int games = 0;
         int score;
+        search::SearchInfo s;
+        s.eval_function = evaluate;
         while (!b.is_over())
         {
             //std::cout << "\n\n\nRandom Mover Move:\n";
             b.do_random_move();
             //b.print_board();
             // std::cout << "\nsearch move: ";
-            const int move = search::search_move(b, 25, true, score);
+            const int move = search::search_move(b, 25, true, score, s);
             //std::cout << "\n\n";
             //std::cout << move << "\n";
             b.do_move(move);
