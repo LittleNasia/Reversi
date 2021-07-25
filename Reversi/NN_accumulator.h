@@ -3,17 +3,24 @@
 
 namespace NN
 {
-	inline int8_t weights[layer_sizes[0]][layer_sizes[1]];
+	
 	//inspired by NNUE, however much simpler 
 	//uses int8 weights, clipped ReLU in range 0..1, 
 	struct NN_accumulator
 	{
 		int16_t output[COLOR_NONE][layer_sizes[1]];
-		
+		inline static int8_t weights[layer_sizes[0]][layer_sizes[1]];
 
 		NN_accumulator()
 		{
 			reset();
+			for (int i = 0; i < layer_sizes[0]; i++)
+			{
+				for (int j = 0; j < layer_sizes[1]; j++)
+				{
+					weights[i][j] = ((int8_t)rng::rng())/2;
+				}
+			}
 		}
 
 		void reset()
@@ -33,7 +40,7 @@ namespace NN
 
 		void update_accumulator(const NN_accumulator& old_acc, const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move)
 		{
-			//std::memcpy(output, old_acc.output, sizeof(output));
+			std::memcpy(output, old_acc.output, sizeof(output));
 			const Color opposite_side = ((side_to_move == COLOR_BLACK) ? COLOR_WHITE : COLOR_BLACK);
 			//the input structure is as follows:
 			//the first 64 neurons are the side_to_move pieces (the side that just made the move), followed by 64 other side pieces

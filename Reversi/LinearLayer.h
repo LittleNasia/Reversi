@@ -11,11 +11,16 @@ namespace NN
 
 		LinearLayer()
 		{
-			std::memset(weights, 4, sizeof(weights));
+			for (int i = 0; i < in_neurons; i++)
+			{
+				for (int j = 0; j < out_neurons; j++)
+				{
+					weights[i][j] = rng::rng();
+				}
+			}
 		}
 
-		template<bool do_zero>
-		void forward(const ClippedReLU<in_neurons, do_zero>& input)
+		void forward(const int8_t* input)
 		{
 			for (int output_neuron = 0; output_neuron < out_neurons; output_neuron++)
 			{
@@ -25,7 +30,7 @@ namespace NN
 				for (int input_pack = 0; input_pack < in_neurons / int8_pack_size; input_pack++)
 				{
 					//we first load the 8 bit integers into memory
-					__m128i ReLU_8_bit_integers = _mm_loadu_si128((__m128i*) (&input.output[(input_pack) * (int8_pack_size)]));
+					__m128i ReLU_8_bit_integers = _mm_loadu_si128((__m128i*) (&input[(input_pack) * (int8_pack_size)]));
 
 					//we convert them to 16 bit integers, so we can do elementwise multiplication
 					//this instruction converts and moves only the lowest 8 bytes, so we will need to redo that again
@@ -64,7 +69,7 @@ namespace NN
 					}
 				}
 				//store the sum, ReLU it (so the result isn't negative) and divide it by the scaling factor 64
-				output[output_neuron] = ((sum>0)?sum:0)>>6;
+				output[output_neuron] = sum/64;
 			}
 		}
 	};

@@ -49,7 +49,8 @@ public:
 	const int is_over() const { return forced_passes > 1; }
 	const int get_ply() const { return ply; }
 	const Color get_side_to_move() const { return side_to_move; }
-	const int16_t* get_current_accumulator() const { return accumulator_history[((ply>0)?(ply - 1):0)].output[side_to_move]; }
+	//returns the output of the accumulator from the perspective of the current side to move 
+	const int16_t* get_current_accumulator_output() const { return accumulator_history[ply].output[side_to_move]; }
 private:
 	void capture(uint8_t move, const bool update_accumulator);
 

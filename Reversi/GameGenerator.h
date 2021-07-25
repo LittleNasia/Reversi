@@ -20,16 +20,18 @@ inline constexpr int8_t game_begin = -1;
 
 struct Game
 {
-	int8_t moves[70];
-	int16_t scores[70];
+	int8_t moves[80];
+	int16_t scores[80];
 	int game_moves = 0;
 	bool scored = false;
 };
+
+
 class GameGenerator
 {
 public:
 	//games to be written to a single file
-	static constexpr int games_per_file = 2500;
+	static constexpr int games_per_file = 1000;
 	//game will terminate early even if it doesn't finish before this number of moves
 	static constexpr int max_game_size = 70;
 	//chance for a random move, max value is 1028 so the unit is something like a permil but slightly less
@@ -37,7 +39,7 @@ public:
 	//how many random moves can be played in a selfplay game
 	static constexpr int max_random_moves = 7; 
 	//if game reaches this ply, random moves will not be used anymore
-	static constexpr int max_ply = 30;
+	static constexpr int max_random_move_ply = 30;
 	//how much of a saved score is evaluation, and how much is the pure game result
 	//lambda = 0 -> use purely game results, lambda = 100 -> use purely evaluation, anything inbetween is the interpolation of the two
 	static constexpr int lambda = 80;
@@ -66,6 +68,7 @@ public:
 		current_file_index = 0;
 	}
 private:
+	std::vector<Game> game_generator_worker(const bool use_random_movers, const bool save_scores, const int search_depth);
 	int current_file_index = 0;
 	const std::string name = "games";
 };

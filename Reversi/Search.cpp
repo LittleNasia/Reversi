@@ -14,7 +14,7 @@ namespace search
 	
 
 	//TT transposition_table;
-	TT transposition_table;
+	thread_local TT transposition_table;
 	unsigned long long Zoribst[64][2];
 	unsigned long long ZoribstSideToMove[2];
 	

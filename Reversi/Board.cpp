@@ -64,10 +64,7 @@ void Board::new_game()
 	move_history[ply].white_bb = bb[COLOR_WHITE];
 	move_history[ply].black_bb = bb[COLOR_BLACK];
 	move_history[ply].forced_passes = 0;
-	for (auto& acc : accumulator_history)
-	{
-		acc.reset();
-	}
+	accumulator_history[0].reset();
 	//update the 0 ply accumulators, by giving them the startpos
 	//we pass the current acc as the old state, because we just need it to be empty and we know that all of them are empty
 	accumulator_history[ply].update_accumulator(accumulator_history[ply],(1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4)), 0ULL, COLOR_BLACK);
@@ -224,7 +221,7 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 				{
 					enemy_bb ^= victims;
 					own_bb ^= victims;
-					if(false)
+					if(update_accumulator)
 						accumulator_history[ply].update_accumulator(accumulator_history[ply-1],victims | (1ULL << move), victims, side_to_move);
 					break;
 				}

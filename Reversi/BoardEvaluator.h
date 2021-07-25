@@ -20,7 +20,9 @@ namespace NN
 	private:
 		ClippedReLU<32,true> ReLU_layer_1;
 		LinearLayer<32, 32> layer_2;
-		ClippedReLU<32, false> ReLU_layer_2;
+		ClippedReLU<32, true> ReLU_layer_2;
 		LinearLayer<32, 1> layer_output;
 	};
+
+	inline thread_local BoardEvaluator be;
 }

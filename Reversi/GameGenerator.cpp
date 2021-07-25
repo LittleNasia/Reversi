@@ -1,4 +1,5 @@
 #include "GameGenerator.h"
+#include <future>
 
 
 
@@ -7,19 +8,22 @@ GameGenerator::GameGenerator()
 	reset();
 }
 
-
-
-std::vector<Game> GameGenerator::generate_games(const bool use_random_movers, const bool save_scores, const int search_depth, int num_threads)
+std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_movers, const bool save_scores, const int search_depth)
 {
 	std::vector<Game> games;
 	Board b;
 	for (int game = 0; game < games_per_file; game++)
 	{
+		if (!(game % (games_per_file / 20)))
+		{
+			std::cout << "progress " << game << "/" << games_per_file << "\n";
+		}
 		Game current_game;
 		current_game.moves[0] = game_begin;
 		//start a game
 		search::SearchInfo s;
 		s.eval_function = evaluate;
+		current_game.scored = !use_random_movers && save_scores;
 		while (!b.is_over())
 		{
 			int move;
@@ -29,6 +33,7 @@ std::vector<Game> GameGenerator::generate_games(const bool use_random_movers, co
 			if (use_random_movers)
 			{
 				move = b.do_random_move();
+				current_game.moves[current_game.game_moves++] = move;
 			}
 			//each move is done using search, with a small chance of a random move
 			else
@@ -39,11 +44,11 @@ std::vector<Game> GameGenerator::generate_games(const bool use_random_movers, co
 				if (save_scores)
 				{
 					current_game.scores[current_game.game_moves] = score * lambda / 100;
-					current_game.scored=true;
 				}
 				//do a random move? 
-				if ((random_move_chance > (rng::rng() & 1028))
-					&& (b.get_ply() <= max_ply)
+				if (
+					(random_move_chance > (rng::rng() & 1028))
+					&& (b.get_ply() <= max_random_move_ply)
 					&& (random_moves_done < max_random_moves)
 					)
 				{
@@ -56,9 +61,8 @@ std::vector<Game> GameGenerator::generate_games(const bool use_random_movers, co
 				//save the move
 				current_game.moves[++current_game.game_moves] = move;
 			}
-			current_game.moves[++current_game.game_moves] = move;
 		}
-		
+
 		if (save_scores && !use_random_movers)
 		{
 			//get the result of the game 
@@ -73,7 +77,7 @@ std::vector<Game> GameGenerator::generate_games(const bool use_random_movers, co
 				result = -search::value_win;
 			}
 			int index = 1;
-			int previous_move = current_game.moves[index-1];
+			int previous_move = current_game.moves[index - 1];
 			int move = current_game.moves[index];
 			//move will be equal to the previous move only if both are passing moves, as that's the only index allowed to repeat
 			//that signals the end of the game
@@ -89,8 +93,29 @@ std::vector<Game> GameGenerator::generate_games(const bool use_random_movers, co
 			current_game.moves[index] = result;
 		}
 		games.emplace_back(current_game);
+		b.new_game();
 	}
-	
+	return games;
+}
+
+
+std::vector<Game> GameGenerator::generate_games(bool use_random_movers, bool save_scores, int search_depth, int num_threads)
+{
+	std::vector<std::future<std::vector<Game>>> thread_results(num_threads);
+	std::vector<Game> combined_games;
+	for (int current_thread = 0; current_thread < num_threads; current_thread++)
+	{
+		thread_results[current_thread] = std::async(&GameGenerator::game_generator_worker,this, use_random_movers, save_scores, search_depth);
+	}
+
+	for (int current_thread = 0; current_thread < num_threads; current_thread++)
+	{
+		const auto& result = thread_results[current_thread].get();
+		combined_games.insert(combined_games.begin(), result.begin(), result.end());
+	}
+
+	return combined_games;
+
 }
 
 
