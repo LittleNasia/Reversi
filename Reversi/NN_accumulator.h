@@ -10,16 +10,28 @@ namespace NN
 	{
 		int16_t output[COLOR_NONE][layer_sizes[1]];
 		inline static int8_t weights[layer_sizes[0]][layer_sizes[1]];
+		inline static int16_t biases[layer_sizes[1]];
 
 		NN_accumulator()
 		{
 			reset();
-			for (int i = 0; i < layer_sizes[0]; i++)
+		}
+
+		static void read_weights(float* weights_from_file, float* biases_from_file)
+		{
+			for (int row = 0, index=0; row < layer_sizes[0]; row++)
 			{
-				for (int j = 0; j < layer_sizes[1]; j++)
+				for (int col = 0; col < layer_sizes[1]; col++, index++)
 				{
-					weights[i][j] = ((int8_t)rng::rng())/2;
+					int weight_int = (int)(weights_from_file[index] * 64);
+					weight_int = std::clamp(weight_int, -128, 127);
+					weights[row][col] = (int8_t)weight_int;
 				}
+			}
+			for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+			{
+				int bias_int = (int)(biases_from_file[neuron] * 127);
+				biases[neuron] = (int16_t)bias_int;
 			}
 		}
 

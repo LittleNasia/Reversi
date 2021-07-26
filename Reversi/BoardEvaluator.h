@@ -17,6 +17,7 @@ namespace NN
 		BoardEvaluator();
 
 		int Evaluate(const Board& b);
+		void test();
 	private:
 		ClippedReLU<32,true> ReLU_layer_1;
 		LinearLayer<32, 32> layer_2;

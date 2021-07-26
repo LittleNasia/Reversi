@@ -8,6 +8,7 @@ namespace NN
 	{
 		int16_t output[out_neurons];
 		int8_t weights[in_neurons][out_neurons];
+		int16_t biases[out_neurons];
 
 		LinearLayer()
 		{
@@ -17,6 +18,24 @@ namespace NN
 				{
 					weights[i][j] = rng::rng();
 				}
+			}
+		}
+
+		void read_weights(float* weights_from_file, float* biases_from_file)
+		{
+			for (int row = 0, index = 0; row < layer_sizes[0]; row++)
+			{
+				for (int col = 0; col < layer_sizes[1]; col++, index++)
+				{
+					int weight_int = (int)(weights_from_file[index] * 64);
+					weight_int = std::clamp(weight_int, -128, 127);
+					weights[row][col] = (int8_t)weight_int;
+				}
+			}
+			for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+			{
+				int bias_int = (int)(biases_from_file[neuron] * 127);
+				biases[neuron] = (int16_t)bias_int;
 			}
 		}
 
@@ -68,8 +87,8 @@ namespace NN
 						sum += temp[i];
 					}
 				}
-				//store the sum, ReLU it (so the result isn't negative) and divide it by the scaling factor 64
-				output[output_neuron] = sum/64;
+				//store the sum and divide it by the scaling factor 64
+				output[output_neuron] = (sum/64) + biases[output_neuron];
 			}
 		}
 	};
