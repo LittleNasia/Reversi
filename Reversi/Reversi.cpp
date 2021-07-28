@@ -43,15 +43,16 @@ void pf(Board& pos, int depth)
 int main()
 {
     NN::BoardEvaluator be;
+    //be.test();
     search::init();
-    Board b;
-    std::cout << be.Evaluate(b) << "\n";
+   // Board b;
+   // std::cout << be.Evaluate(b) << "\n";
     GameGenerator gg;
     auto start = high_resolution_clock::now();
-    gg.generate_games(false, true, 5, 3);
+    gg.generate_games(false, true, 4, 3);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";
-    b.print_board();
+    //b.print_board();
    // std::cout << "took " << d / 10 << "\n";
 }

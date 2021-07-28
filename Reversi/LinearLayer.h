@@ -23,18 +23,26 @@ namespace NN
 
 		void read_weights(float* weights_from_file, float* biases_from_file)
 		{
-			for (int row = 0, index = 0; row < layer_sizes[0]; row++)
+			for (int col=0, index = 0 ; col < out_neurons; col++)
 			{
-				for (int col = 0; col < layer_sizes[1]; col++, index++)
+				for (int row = 0; row < in_neurons; row++, index++)
 				{
-					int weight_int = (int)(weights_from_file[index] * 64);
+					//unlike in the accumulator, no funny rules apply here, the input incoming to the layer is scalled correctly
+					//this means the calculation can be done perfectly fine using normal int8 weights and their scaling factors
+					int weight_int = (int)(weights_from_file[index] * weight_scaling_factor);
 					weight_int = std::clamp(weight_int, -128, 127);
 					weights[row][col] = (int8_t)weight_int;
 				}
 			}
-			for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+			for (int neuron = 0; neuron < out_neurons; neuron++)
 			{
-				int bias_int = (int)(biases_from_file[neuron] * 127);
+				//bias is as if you connected a node with value 1 float and used bias as a weight
+				//1 float is equal to 1 * input_scaling_factor int value, meanwhile the bias value is scaled by the weight scaling factor
+				//which means that effectively the calculation of bias node and its weight is as follows:
+				//input_value(input (1) * input_scaling_factor) * weight_value(bias_float * weight_scaling_factor)
+				//at the end, this simplifies to input_scaling_factor * bias_float * weight_scaling_factor
+				//this funny business was not done in the accumulator, as the input to the acucmulator is not scaled by the input scaling factor
+				int bias_int = (int)(biases_from_file[neuron] * weight_scaling_factor * input_scaling_factor);
 				biases[neuron] = (int16_t)bias_int;
 			}
 		}
@@ -48,7 +56,7 @@ namespace NN
 				int sum=0;
 				for (int input_pack = 0; input_pack < in_neurons / int8_pack_size; input_pack++)
 				{
-					//we first load the 8 bit integers into memory
+					//we first load the 8 bit integers into memory, it's the inputs
 					__m128i ReLU_8_bit_integers = _mm_loadu_si128((__m128i*) (&input[(input_pack) * (int8_pack_size)]));
 
 					//we convert them to 16 bit integers, so we can do elementwise multiplication
@@ -71,7 +79,7 @@ namespace NN
 					
 
 
-					//elementwise multiplication 
+					//elementwise multiplication of inputs and their respective weights
 					__m128i result = _mm_mullo_epi16(first_16bit_pack, first_16bit_weight_pack);
 					//store the result 
 					int16_t temp[16];
@@ -82,13 +90,14 @@ namespace NN
 					//store the second part of the result
 					_mm_store_si128((__m128i*) &temp[8], result);
 					
+					//sum all values, as the output of a node is sum(inputs * weights) 
 					for (int i = 0; i < 16; i++)
 					{
 						sum += temp[i];
 					}
 				}
 				//store the sum and divide it by the scaling factor 64
-				output[output_neuron] = (sum/64) + biases[output_neuron];
+				output[output_neuron] = (sum + biases[output_neuron]) / weight_scaling_factor;
 			}
 		}
 	};

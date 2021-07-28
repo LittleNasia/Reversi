@@ -117,7 +117,7 @@ inline constexpr int capture_iteration_count[64][DIRECTION_NONE] =
 namespace rng
 {
 	//use x as the seed for the rng
-	extern inline unsigned long x = 
+	extern inline thread_local unsigned long x = 
 		((__rdtsc() *
 			(_lzcnt_u32(x) + 1234) *
 			(unsigned long long)capture_iteration_count) ^
@@ -156,4 +156,6 @@ namespace NN
 	{
 		64 * 4, 32, 32, 1
 	};
+	constexpr int weight_scaling_factor = 64;
+	constexpr int input_scaling_factor = 64;
 }

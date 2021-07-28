@@ -167,15 +167,7 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 		auto& enemy_bb = bb[side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE];
 		const auto& empty = ~(own_bb | enemy_bb);
 		own_bb ^= (1ULL << move);
-		constexpr bitboard(*direction_functions[])(const bitboard) = {
-			left_up,
-			up,
-			right_up,
-			right,
-			right_down,
-			down,
-			left_down,
-			left };
+		
 		for (int direction = DIRECTION_UP_LEFT; direction < DIRECTION_NONE; direction++)
 		{
 			bitboard victims = 0ULL;
@@ -237,10 +229,12 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 	{
 		forced_passes++;
 		move_history[ply].forced_passes = forced_passes;
+		
 	}
+	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 	move_history[ply].white_bb = bb[COLOR_WHITE];
 	move_history[ply].black_bb = bb[COLOR_BLACK];
-	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
+	
 }
 
 void Board::do_move(const int square, const bool update_accumulator)
@@ -307,7 +301,7 @@ int Board::do_random_move()
 		move = invalid_index;
 		capture(move, true);
 	}
-	return move;
+	return available_moves[move];
 }	
 
 void Board::undo_move()

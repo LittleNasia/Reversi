@@ -1,5 +1,6 @@
 #include "GameGenerator.h"
 #include <future>
+#include <fstream>
 
 
 
@@ -14,7 +15,7 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 	Board b;
 	for (int game = 0; game < games_per_file; game++)
 	{
-		if (!(game % (games_per_file / 20)))
+		if (!(game % (games_per_file / 60)))
 		{
 			std::cout << "progress " << game << "/" << games_per_file << "\n";
 		}
@@ -24,6 +25,7 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 		search::SearchInfo s;
 		s.eval_function = evaluate;
 		current_game.scored = !use_random_movers && save_scores;
+
 		while (!b.is_over())
 		{
 			int move;
@@ -33,7 +35,7 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 			if (use_random_movers)
 			{
 				move = b.do_random_move();
-				current_game.moves[current_game.game_moves++] = move;
+				current_game.moves[++current_game.game_moves] = move;
 			}
 			//each move is done using search, with a small chance of a random move
 			else
@@ -53,6 +55,7 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 					)
 				{
 					move = b.do_random_move();
+					random_moves_done++;
 				}
 				else
 				{
@@ -79,18 +82,21 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 			int index = 1;
 			int previous_move = current_game.moves[index - 1];
 			int move = current_game.moves[index];
+			//make sure result also gets added based on the side to move perspective
+			int result_multiplier = 1;
 			//move will be equal to the previous move only if both are passing moves, as that's the only index allowed to repeat
 			//that signals the end of the game
 			while (move != previous_move)
 			{
-				current_game.scores[index - 1] += (100 - lambda) * result / 100;
-				index++;
+				current_game.scores[index - 1] += (100 - lambda) * (result * result_multiplier) / 100;
+				result_multiplier *= -1;
 				previous_move = current_game.moves[index - 1];
 				move = current_game.moves[index];
+				index++;
 			}
 			//the last move wasn't scored, as it has ended the game and it wasn't searched
-			//same the game result in it, as the game has just ended
-			current_game.moves[index] = result;
+			//store the game result in it, as the game has just ended
+			current_game.scores[index-1] = (result * result_multiplier);
 		}
 		games.emplace_back(current_game);
 		b.new_game();
@@ -113,9 +119,25 @@ std::vector<Game> GameGenerator::generate_games(bool use_random_movers, bool sav
 		const auto& result = thread_results[current_thread].get();
 		combined_games.insert(combined_games.begin(), result.begin(), result.end());
 	}
-
+	std::ofstream games_file("games.bin", std::ios::binary);
+	std::cout << "generated " << combined_games.size() << " games\n";
+	for (auto& game : combined_games)
+	{
+		int index = 0;
+		Board b;
+		while (!b.is_over())
+		{
+			if (game.moves[index] != game_begin)
+			{
+				b.do_move(game.moves[index],false);
+			}
+			games_file.write((char*)&game.moves[index], 1);
+			games_file.write((char*)&game.scores[index], 2);
+			index++;
+		}
+	}
+	games_file.close();
 	return combined_games;
-
 }
 
 

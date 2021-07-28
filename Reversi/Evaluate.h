@@ -42,7 +42,7 @@ inline const int evaluate(Board& b)
 		white_moves = b.get_num_moves() * 7;
 	}
 	b.undo_move();
-	int total_score = black_moves - white_moves + NN::be.Evaluate(b);
+	int total_score = NN::be.Evaluate(b);
 
 	//center 16 score
 	int center_16_score = 0;//(__popcnt64(black_bb & center_16_bitmask) - __popcnt64(white_bb & center_16_bitmask)) * 1;
@@ -56,7 +56,7 @@ inline const int evaluate(Board& b)
 	//C-squares punishment (smaller than corners, so that taking corners is always beneficial, but not C squares alone)
 	int C_squares_punishment = 0;// (__popcnt64(black_bb & corners) - __popcnt64(white_bb & corners)) * -3;
 
-	total_score += center_16_score + center_4_score + corner_score + C_squares_punishment;
+	//total_score += center_16_score + center_4_score + corner_score + C_squares_punishment;
 
 	//side to move perspective
 	return total_score * ((b.get_side_to_move() == COLOR_BLACK) ? 1 : -1);

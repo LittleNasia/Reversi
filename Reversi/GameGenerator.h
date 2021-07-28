@@ -31,7 +31,7 @@ class GameGenerator
 {
 public:
 	//games to be written to a single file
-	static constexpr int games_per_file = 1000;
+	static constexpr int games_per_file = 100000;
 	//game will terminate early even if it doesn't finish before this number of moves
 	static constexpr int max_game_size = 70;
 	//chance for a random move, max value is 1028 so the unit is something like a permil but slightly less
@@ -42,7 +42,7 @@ public:
 	static constexpr int max_random_move_ply = 30;
 	//how much of a saved score is evaluation, and how much is the pure game result
 	//lambda = 0 -> use purely game results, lambda = 100 -> use purely evaluation, anything inbetween is the interpolation of the two
-	static constexpr int lambda = 80;
+	static constexpr int lambda = 100;
 
 	GameGenerator();
 

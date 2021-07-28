@@ -9,8 +9,9 @@ namespace NN
 	struct NN_accumulator
 	{
 		int16_t output[COLOR_NONE][layer_sizes[1]];
-		inline static int8_t weights[layer_sizes[0]][layer_sizes[1]];
+		inline static int16_t weights[layer_sizes[0]][layer_sizes[1]];
 		inline static int16_t biases[layer_sizes[1]];
+		inline static bool weights_loaded = false;
 
 		NN_accumulator()
 		{
@@ -19,20 +20,36 @@ namespace NN
 
 		static void read_weights(float* weights_from_file, float* biases_from_file)
 		{
-			for (int row = 0, index=0; row < layer_sizes[0]; row++)
+			if (!weights_loaded)
 			{
-				for (int col = 0; col < layer_sizes[1]; col++, index++)
+				for (int row = 0, index = 0; row < layer_sizes[0]; row++)
 				{
-					int weight_int = (int)(weights_from_file[index] * 64);
-					weight_int = std::clamp(weight_int, -128, 127);
-					weights[row][col] = (int8_t)weight_int;
+					for (int col = 0; col < layer_sizes[1]; col++, index++)
+					{
+						//float weights are in range -128/64 to 127/64, however in the accumulator, they are directly contributing to the input
+						//as the input is binary 0 or 1, it is not scaled by the input scaling factor
+						//multiplying the weights each time they're added by 127 could very easily both overflow and be just slow
+						//that's why the weights are scaled by both the input factor and weight factor, and just like normal output of each layer
+						//weights are then divided by the weight scaling factor
+						//as one can notice, this is identical to just using the input scaling factor for weights directly
+						//however that would imply the int8 weights can only hold values from -128/127 to 127/127, which is not what we want
+						//instead, I just expand the range of int values for weights to be -256, 255, which allows me to use both input scaling factor
+						//and keep the weights in range -2,127/64
+						int weight_int = (int)(weights_from_file[index] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
+						weight_int = std::clamp(weight_int, -256, 255);
+						weights[row][col] = (int16_t)weight_int;
+					}
 				}
+				for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+				{	
+					//biases are effectively weights, same rules apply
+					int bias_int = (int)(biases_from_file[neuron] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
+					bias_int = std::clamp(bias_int, -256, 255);
+					biases[neuron] = (int16_t)bias_int;
+				}
+				weights_loaded = true;
 			}
-			for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
-			{
-				int bias_int = (int)(biases_from_file[neuron] * 127);
-				biases[neuron] = (int16_t)bias_int;
-			}
+			
 		}
 
 		void reset()
@@ -118,6 +135,28 @@ namespace NN
 				output[side_to_move][neuron] -= weights[new_move_index + 64 * 3][neuron];
 				output[opposite_side][neuron] -= weights[new_move_index + 64 * 3][neuron];
 			}
+		}
+
+		//computes the output as if it was a normal forward pass
+		//only to be used as a test function
+		void recompute_acc(int16_t* input)
+		{
+			for (int output_node = 0; output_node < layer_sizes[1]; output_node++)
+			{
+				output[COLOR_WHITE][output_node] = biases[output_node];
+				output[COLOR_BLACK][output_node] = biases[output_node];
+			}
+
+			std::cout << "\n";
+			for (int input_node = 0; input_node < layer_sizes[0]; input_node++)
+			{
+				for (int output_node = 0; output_node < layer_sizes[1]; output_node++)
+				{
+					output[COLOR_BLACK][output_node] += input[input_node] * weights[input_node][output_node];
+					output[COLOR_WHITE][output_node] += input[input_node] * weights[input_node][output_node];
+				}
+			}
+			
 		}
 	};
 
