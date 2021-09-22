@@ -3,10 +3,17 @@
 #include "NN_accumulator.h"
 #include "ClippedReLU.h"
 
+
+
+struct playfield_bitboard
+{
+	bitboard white_bb;
+	bitboard black_bb;
+};
+
 struct Move
 {
-	bitboard black_bb;
-	bitboard white_bb;
+	playfield_bitboard bb;
 	int64_t forced_passes;
 };
 
@@ -43,9 +50,10 @@ public:
 	void new_game();
 	void undo_move();
 
-	const bitboard* const get_board() const { return bb; }
+	const uint8_t get_playfield_config() const;
+	const playfield_bitboard& get_board() const { return bb; }
 	const int get_num_moves() const { return num_moves; }
-	const int get_score() const { return __popcnt64(bb[COLOR_BLACK]) - __popcnt64(bb[COLOR_WHITE]); }
+	const int get_score() const { return __popcnt64(bb.black_bb) - __popcnt64(bb.white_bb); }
 	const int is_over() const { return forced_passes > 1; }
 	const int get_ply() const { return ply; }
 	const Color get_side_to_move() const { return side_to_move; }
@@ -58,7 +66,7 @@ private:
 	NN::NN_accumulator accumulator_history[Board::max_ply];
 	Move move_history[max_ply];
 	moves_array available_moves;
-	bitboard bb[COLOR_NONE];
+	playfield_bitboard bb;
 	int64_t forced_passes;
 	Color side_to_move;
 	Color result;

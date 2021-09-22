@@ -19,7 +19,7 @@ namespace NN
 		int Evaluate(const Board& b);
 		void test();
 	private:
-		ClippedReLU<32,true> ReLU_layer_1;
+		ClippedReLU<32, true> ReLU_layer_1;
 		LinearLayer<32, 32> layer_2;
 		ClippedReLU<32, true> ReLU_layer_2;
 		LinearLayer<32, 1> layer_output;

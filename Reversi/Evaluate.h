@@ -13,8 +13,8 @@ constexpr unsigned long long C_squares = (1ULL << 62) | (1ULL << 55) | (1ULL << 
 
 inline const int evaluate(Board& b)
 {
-	const bitboard black_bb = b.get_board()[COLOR_BLACK];
-	const bitboard white_bb = b.get_board()[COLOR_WHITE];
+	const bitboard black_bb = b.get_board().black_bb;
+	const bitboard white_bb = b.get_board().white_bb;
 
 	//black side to move perspective
 
@@ -59,5 +59,5 @@ inline const int evaluate(Board& b)
 	//total_score += center_16_score + center_4_score + corner_score + C_squares_punishment;
 
 	//side to move perspective
-	return total_score * ((b.get_side_to_move() == COLOR_BLACK) ? 1 : -1);
+	return total_score * ((b.get_side_to_move() == COLOR_BLACK) ? 1 : 1);
 }

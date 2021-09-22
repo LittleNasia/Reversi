@@ -45,11 +45,19 @@ int main()
     NN::BoardEvaluator be;
     //be.test();
     search::init();
-   // Board b;
+    Board b;
    // std::cout << be.Evaluate(b) << "\n";
     GameGenerator gg;
     auto start = high_resolution_clock::now();
-    gg.generate_games(false, true, 4, 3);
+    for (int i = 0; i < 10; i++)
+    {
+        auto games = gg.generate_games(false, true, 3, 4);
+        auto filename = gg.save_to_file(games);
+        gg.convert_to_input_type(filename);
+    }
+    
+    
+    
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";

@@ -1,6 +1,7 @@
 #include "GameGenerator.h"
 #include <future>
 #include <fstream>
+#include <memory>
 
 
 
@@ -20,7 +21,6 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 			std::cout << "progress " << game << "/" << games_per_file << "\n";
 		}
 		Game current_game;
-		current_game.moves[0] = game_begin;
 		//start a game
 		search::SearchInfo s;
 		s.eval_function = evaluate;
@@ -28,24 +28,23 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 
 		while (!b.is_over())
 		{
-			int move;
-			int score;
+			scored_move curr_move;
 			int random_moves_done = 0;
 			//does the game have to feature random moves only? no scores if that's the case 
 			if (use_random_movers)
 			{
-				move = b.do_random_move();
-				current_game.moves[++current_game.game_moves] = move;
+				curr_move.move = b.do_random_move();
 			}
 			//each move is done using search, with a small chance of a random move
 			else
 			{
 				//we search so that we have the move and score
 				//in case the move gets changed to a random move, eval will still be there and it will still be correct
-				move = search::search_move(b, search_depth, false, score, s);
+				int score = 0;
+				curr_move.move = search::search_move(b, search_depth, false, score, s);
 				if (save_scores)
 				{
-					current_game.scores[current_game.game_moves] = score * lambda / 100;
+					curr_move.score = score * (lambda)/100;
 				}
 				//do a random move? 
 				if (
@@ -54,19 +53,20 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 					&& (random_moves_done < max_random_moves)
 					)
 				{
-					move = b.do_random_move();
+					curr_move.move = b.do_random_move();
 					random_moves_done++;
 				}
+				//don't do a random move, do the searched move
 				else
 				{
-					b.do_move(move);
+					b.do_move(curr_move.move);
 				}
-				//save the move
-				current_game.moves[++current_game.game_moves] = move;
 			}
+			//save the move
+			current_game.moves[current_game.game_moves++] = curr_move;
 		}
 
-		if (save_scores && !use_random_movers)
+		if (current_game.scored)
 		{
 			//get the result of the game 
 			//each score saved in a game file is an interpolation between eval and game result
@@ -80,23 +80,23 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 				result = -search::value_win;
 			}
 			int index = 1;
-			int previous_move = current_game.moves[index - 1];
-			int move = current_game.moves[index];
+			int previous_index = 0;
+			int previous_move = current_game.moves[previous_index].move;
+			int move = current_game.moves[index].move;
 			//make sure result also gets added based on the side to move perspective
 			int result_multiplier = 1;
 			//move will be equal to the previous move only if both are passing moves, as that's the only index allowed to repeat
 			//that signals the end of the game
 			while (move != previous_move)
 			{
-				current_game.scores[index - 1] += (100 - lambda) * (result * result_multiplier) / 100;
+				current_game.moves[previous_index].score += (100 - lambda) * (result * result_multiplier) / 100;
 				result_multiplier *= -1;
-				previous_move = current_game.moves[index - 1];
-				move = current_game.moves[index];
+				previous_move = current_game.moves[previous_index].move;
+				move = current_game.moves[index].move;
 				index++;
+				previous_index = index-1;
 			}
-			//the last move wasn't scored, as it has ended the game and it wasn't searched
-			//store the game result in it, as the game has just ended
-			current_game.scores[index-1] = (result * result_multiplier);
+			current_game.moves[previous_index].score += (100 - lambda) * (result * result_multiplier) / 100;
 		}
 		games.emplace_back(current_game);
 		b.new_game();
@@ -119,25 +119,82 @@ std::vector<Game> GameGenerator::generate_games(bool use_random_movers, bool sav
 		const auto& result = thread_results[current_thread].get();
 		combined_games.insert(combined_games.begin(), result.begin(), result.end());
 	}
-	std::ofstream games_file("games.bin", std::ios::binary);
-	std::cout << "generated " << combined_games.size() << " games\n";
-	for (auto& game : combined_games)
-	{
-		int index = 0;
-		Board b;
-		while (!b.is_over())
-		{
-			if (game.moves[index] != game_begin)
-			{
-				b.do_move(game.moves[index],false);
-			}
-			games_file.write((char*)&game.moves[index], 1);
-			games_file.write((char*)&game.scores[index], 2);
-			index++;
-		}
-	}
-	games_file.close();
 	return combined_games;
 }
 
+std::string GameGenerator::save_to_file(const std::vector<Game>& games)
+{
+	bool scored = games[0].scored;
+	std::string filename = "games" + std::to_string(current_file_index++) + (scored ? ".sbin" : ".nsbin");
+	std::ofstream game_file(filename, std::ios::binary);
 
+	for (const auto& game : games)
+	{
+		int8_t previous_move = Board::invalid_index;
+		for (const auto& move : game.moves)
+		{
+			game_file.write((char*)&move.move, sizeof(move.move));
+			if (scored)
+			{
+				game_file.write((char*)&move.score, sizeof(move.score));
+			}
+
+			//two moves repeated, only passing moves can repeat, thus the game has ended
+			if (move.move == previous_move)
+			{
+				break;
+			}
+		}
+	}
+	game_file.close();
+	return filename;
+}
+
+
+void GameGenerator::convert_to_input_type(const std::string& filename)
+{
+	std::ifstream game_file(filename, std::ios::binary);
+	bool scored = filename.find(".nsbin") == std::string::npos;
+
+	//get file length
+	game_file.seekg(0, game_file.end);
+	int length = game_file.tellg();
+	game_file.seekg(0, game_file.beg);
+
+	//read the entire file
+	auto buff = std::make_unique<char[]>(length);
+	game_file.read(buff.get(), length);
+	game_file.close();
+
+	std::ofstream game_file_with_inputs(filename + "." + (scored ? "sinput" : "nsinput"), std::ios::binary);
+	Board b;
+	for (int move = 0; move < length; move++)
+	{
+		int8_t current_move = buff[move];
+		const auto side_to_move = b.get_side_to_move();
+		const auto& playfield = b.get_board();
+
+		//save the current input, side to move perspective
+		const auto side_to_move_bb = side_to_move == COLOR_WHITE ? playfield.white_bb : playfield.black_bb;
+		game_file_with_inputs.write((char*)&side_to_move_bb, sizeof(side_to_move_bb));
+		const auto opposite_side_bb = side_to_move == COLOR_WHITE ? playfield.black_bb : playfield.white_bb;
+		game_file_with_inputs.write((char*)&opposite_side_bb, sizeof(opposite_side_bb));
+
+		//save the score
+		if (scored)
+		{
+			//this gets the memory of buff[move+1], which is where the scores start
+			//then it casts it to int16_t array, as that's the score type
+			//finally, it dereferences the pointer to get the score
+			int16_t score = *((int16_t*)(&(buff[move + 1])));
+			game_file_with_inputs.write((char*)&score, sizeof(score));
+			move += 2;
+		}
+		b.do_move(current_move,false);
+		if (b.is_over())
+		{
+			b.new_game();
+		}
+	}
+	game_file_with_inputs.close();
+}

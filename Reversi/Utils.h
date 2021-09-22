@@ -119,7 +119,7 @@ namespace rng
 	//use x as the seed for the rng
 	extern inline thread_local unsigned long x = 
 		((__rdtsc() *
-			(_lzcnt_u32(x) + 1234) *
+			(__popcnt64(__rdtsc()) + 1234) *
 			(unsigned long long)capture_iteration_count) ^
 			0xABCDABCDABCD) ^
 		__rdtsc() ^

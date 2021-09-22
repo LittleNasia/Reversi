@@ -51,7 +51,7 @@ namespace search
 	const unsigned long long hash(const Board& b)
 	{
 		bitboard board[COLOR_NONE];
-		std::memcpy(board, b.get_board(), sizeof(bitboard) * COLOR_NONE);
+		std::memcpy(board, &b.get_board(), sizeof(bitboard) * COLOR_NONE);
 		unsigned long long posKey = 0;
 		for (int color = 0; color < COLOR_NONE; color++)
 		{
