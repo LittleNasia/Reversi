@@ -26,7 +26,7 @@ void pf(Board& pos, int depth)
     std::memcpy(moves, pos.get_moves(), Board::rows * Board::cols / 2);
     int num_moves = pos.get_num_moves();
     int current_move = 0;
-    while (moves[current_move] != Board::invalid_index)
+    while (moves[current_move] != Board::passing_index)
     {
         pos.do_move(moves[current_move++]);
         pf(pos, depth - 1);
@@ -34,7 +34,7 @@ void pf(Board& pos, int depth)
     }
     if (!num_moves)
     {
-        pos.do_move(Board::invalid_index);
+        pos.do_move(Board::passing_index);
         pf(pos, depth - 1);
         pos.undo_move();
     }
@@ -42,16 +42,26 @@ void pf(Board& pos, int depth)
  
 int main()
 {
-    NN::BoardEvaluator be;
+    //NN::BoardEvaluator be;
+   // be.test();
     //be.test();
     search::init();
-    Board b;
-   // std::cout << be.Evaluate(b) << "\n";
-    GameGenerator gg;
     auto start = high_resolution_clock::now();
-    for (int i = 0; i < 10; i++)
+    Board b;
+    //
+    while (!b.is_over())
     {
-        auto games = gg.generate_games(false, true, 3, 4);
+        std::cout << "ply " << b.get_ply() << " config" << (int)b.get_playfield_config() << "\n";
+        std::cout << NN::be.Evaluate(b) << "\n";
+        b.do_first_move();
+    }
+    
+    
+    GameGenerator gg;
+    
+    for (int i = 0; i < 1; i++)
+    {
+        auto games = gg.generate_games(false, true, 1, 4);
         auto filename = gg.save_to_file(games);
         gg.convert_to_input_type(filename);
     }

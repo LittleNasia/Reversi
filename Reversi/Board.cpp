@@ -8,13 +8,36 @@ Board::Board()
 	new_game();
 }
 
+void print_bitboard(bitboard bb)
+{
+	int index = 63;
+	for (int row = 0; row < 8; row++)
+	{
+		for (int col = 0; col < 8; col++)
+		{
+			std::cout << "[";
+			if ((1ULL << index) & bb)
+			{
+				std::cout << "X";
+			}
+			else
+			{
+				std::cout << " ";
+			}
+			std::cout << "]";
+			index--;
+		}
+		std::cout << "\n";
+	}
+}
+
 void Board::print_board()
 {
 	int index = 63;
 	get_moves();
 	int x = available_moves[0];
 	int moves_i = 0;
-	while (x != invalid_index)
+	while (x != passing_index)
 	{
 		std::cout << x << " ";
 		moves_i++;
@@ -63,12 +86,11 @@ void Board::new_game()
 	result = COLOR_NONE;
 	move_history[ply].bb.white_bb = bb.white_bb;
 	move_history[ply].bb.black_bb = bb.black_bb;
+	//std::cout << bb.white_bb << "\n";
+	//std::cout << bb.black_bb << "\n";
 	move_history[ply].forced_passes = 0;
 	accumulator_history[0].reset();
-	//update the 0 ply accumulators, by giving them the startpos
-	//we pass the current acc as the old state, because we just need it to be empty and we know that all of them are empty
-	//accumulator_history[ply].update_accumulator(accumulator_history[ply],(1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4)), 0ULL, COLOR_BLACK);
-	//accumulator_history[ply].update_accumulator(accumulator_history[ply],(1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3)), 0ULL, COLOR_WHITE);
+	accumulator_history[0].refresh(bb.white_bb, bb.black_bb,0);
 }
 
 const Board::move_type* Board::get_moves()
@@ -151,7 +173,7 @@ const Board::move_type* Board::get_moves()
 		result ^= (1ULL << available_moves[move_index++]);
 	}
 	num_moves = move_index;
-	available_moves[move_index] = invalid_index;
+	available_moves[move_index] = passing_index;
 
 	return available_moves;
 }
@@ -159,7 +181,7 @@ const Board::move_type* Board::get_moves()
 //only to be called with a move that is legal for sure
 void Board::capture(const uint8_t move, const bool update_accumulator)
 {
-	if (move != invalid_index)
+	if (move != passing_index)
 	{ 
 		forced_passes = 0;
 		uint32_t move_masks = 0;
@@ -167,6 +189,7 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 		auto& enemy_bb = side_to_move == COLOR_WHITE ? bb.black_bb : bb.white_bb;
 		const auto& empty = ~(own_bb | enemy_bb);
 		own_bb ^= (1ULL << move);
+		bitboard total_victims = 0ULL;
 		
 		for (int direction = DIRECTION_UP_LEFT; direction < DIRECTION_NONE; direction++)
 		{
@@ -213,8 +236,8 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 				{
 					enemy_bb ^= victims;
 					own_bb ^= victims;
-					if(update_accumulator)
-						accumulator_history[ply].update_accumulator(accumulator_history[ply-1],victims | (1ULL << move), victims, side_to_move, *this);
+					total_victims |= victims;
+					//std::cout << "actual move " << (int)move << "\n";
 					break;
 				}
 				else if (move_square & empty)
@@ -223,12 +246,18 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 				}
 			}
 		}
+		if (update_accumulator)
+			//std::cout << "victims " << victims << "\n";
+			//accumulator_history[ply].refresh(bb.white_bb, bb.black_bb, get_playfield_config());
+			accumulator_history[ply].update_accumulator(accumulator_history[ply - 1], total_victims | (1ULL << move), total_victims, side_to_move, *this);
 		move_history[ply].forced_passes = 0;
 	}
 	else
 	{
 		forced_passes++;
 		move_history[ply].forced_passes = forced_passes;
+		if (update_accumulator)
+			accumulator_history[ply].update_accumulator(accumulator_history[ply - 1], 0, 0, side_to_move, *this, true);
 		
 	}
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
@@ -252,7 +281,7 @@ const bool Board::do_move_is_legal(const int square, const bool update_accumulat
 	bool found = 0;
 	//could use binary search, however the function is still only to be called by humans anyways
 	//it's not speed critical 
-	while (curr_move != invalid_index)
+	while (curr_move != passing_index)
 	{
 		curr_move = available_moves[index++];
 		if (curr_move == square)
@@ -261,7 +290,7 @@ const bool Board::do_move_is_legal(const int square, const bool update_accumulat
 			break;
 		}
 	}
-	if (found || (square == invalid_index))
+	if (found || (square == passing_index))
 	{
 		capture(square, update_accumulator);
 		return true;
@@ -298,11 +327,20 @@ int Board::do_random_move()
 	}
 	else
 	{
-		move = invalid_index;
+		move = passing_index;
 		capture(move, true);
 	}
 	return available_moves[move];
 }	
+
+int Board::do_first_move()
+{
+	ply++;
+	get_moves();
+	int move = 0;
+	capture(available_moves[move], true);
+	return available_moves[move];
+}
 
 void Board::undo_move()
 {
@@ -326,13 +364,15 @@ const uint8_t Board::get_playfield_config() const
 		(1ULL << 24) | (1ULL << 32),
 		(1ULL << 31) | (1ULL << 39),
 		(1ULL << 60) | (1ULL << 59),
+		(1ULL << 13) | (1ULL << 22)
 	};
 	bitboard combined_bb = bb.white_bb | bb.black_bb;
 	uint8_t result = 0;
 
-	for (int bit_index = 0; bit_index < sizeof(uint8_t); bit_index++)
+	for (int bit_index = 0; bit_index <8; bit_index++)
 	{
-		if ((combined_bb & masks[bit_index]) == masks[bit_index])
+		//print_bitboard(masks[bit_index]);
+		if ((combined_bb & masks[bit_index]))
 		{
 			result |= (1 << bit_index);
 		}

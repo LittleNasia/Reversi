@@ -1,7 +1,6 @@
 #pragma once
 #include "BitUtilities.h"
 #include <iostream>
-#include <Eigen/Core>
 enum Color
 {
 	COLOR_BLACK,
@@ -154,8 +153,15 @@ namespace NN
 	constexpr int num_layers = 4;
 	constexpr int layer_sizes[4] =
 	{
-		64 * 4, 32, 32, 1
+		64 * 4 * 256, 32, 32, 1
 	};
+	constexpr int side_to_move_offset = 64*0;
+	constexpr int opposite_side_offset = 64*1;
+	constexpr int taken_squares_offset = 64*2;
+	constexpr int free_squares_offset = 64*3;
+
+	constexpr int num_features = 64 * 4;
+
 	constexpr int weight_scaling_factor = 64;
-	constexpr int input_scaling_factor = 64;
+	constexpr int input_scaling_factor = 127;
 }

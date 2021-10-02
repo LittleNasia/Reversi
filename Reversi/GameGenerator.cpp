@@ -21,15 +21,18 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 			std::cout << "progress " << game << "/" << games_per_file << "\n";
 		}
 		Game current_game;
+		current_game.moves.reserve(64);
 		//start a game
 		search::SearchInfo s;
 		s.eval_function = evaluate;
+
 		current_game.scored = !use_random_movers && save_scores;
 
+		int random_moves_done = 0;
 		while (!b.is_over())
 		{
 			scored_move curr_move;
-			int random_moves_done = 0;
+
 			//does the game have to feature random moves only? no scores if that's the case 
 			if (use_random_movers)
 			{
@@ -42,9 +45,11 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 				//in case the move gets changed to a random move, eval will still be there and it will still be correct
 				int score = 0;
 				curr_move.move = search::search_move(b, search_depth, false, score, s);
+				//std::cout << score << "\n";
 				if (save_scores)
 				{
-					curr_move.score = score * (lambda)/100;
+					curr_move.score = score * (lambda) / 100;//NN::be.Evaluate(b);//
+					//std::cout << curr_move.score << "\n";
 				}
 				//do a random move? 
 				if (
@@ -63,7 +68,7 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 				}
 			}
 			//save the move
-			current_game.moves[current_game.game_moves++] = curr_move;
+			current_game.moves.emplace_back(curr_move);
 		}
 
 		if (current_game.scored)
@@ -79,24 +84,18 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 			{
 				result = -search::value_win;
 			}
-			int index = 1;
-			int previous_index = 0;
-			int previous_move = current_game.moves[previous_index].move;
-			int move = current_game.moves[index].move;
+
 			//make sure result also gets added based on the side to move perspective
 			int result_multiplier = 1;
 			//move will be equal to the previous move only if both are passing moves, as that's the only index allowed to repeat
 			//that signals the end of the game
-			while (move != previous_move)
+			for(auto& move: current_game.moves)
 			{
-				current_game.moves[previous_index].score += (100 - lambda) * (result * result_multiplier) / 100;
+				move.score += (100 - lambda) * (result * result_multiplier) / 100;
+				//the side to move changes on each move, so does the perspective
+				//a win of one side is the loss of the other side
 				result_multiplier *= -1;
-				previous_move = current_game.moves[previous_index].move;
-				move = current_game.moves[index].move;
-				index++;
-				previous_index = index-1;
 			}
-			current_game.moves[previous_index].score += (100 - lambda) * (result * result_multiplier) / 100;
 		}
 		games.emplace_back(current_game);
 		b.new_game();
@@ -130,19 +129,13 @@ std::string GameGenerator::save_to_file(const std::vector<Game>& games)
 
 	for (const auto& game : games)
 	{
-		int8_t previous_move = Board::invalid_index;
+		int8_t previous_move = Board::passing_index;
 		for (const auto& move : game.moves)
 		{
 			game_file.write((char*)&move.move, sizeof(move.move));
 			if (scored)
 			{
 				game_file.write((char*)&move.score, sizeof(move.score));
-			}
-
-			//two moves repeated, only passing moves can repeat, thus the game has ended
-			if (move.move == previous_move)
-			{
-				break;
 			}
 		}
 	}

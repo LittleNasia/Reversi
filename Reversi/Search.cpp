@@ -203,7 +203,7 @@ namespace search
 		//null move pruning
 		if ((numMoves) && (doNull) && (depth >= 5))
 		{
-			b.do_move(Board::invalid_index);
+			b.do_move(Board::passing_index);
 			int value = -search(b, depth - 4, -beta, -beta + 1, s, false);
 			b.undo_move();
 			if (value >= beta)
@@ -261,10 +261,10 @@ namespace search
 				}
 			}
 
-			//we don't check invalid_index (passing moves), unless it is the only possible move
+			//we don't check passing_index (passing moves), unless it is the only possible move
 			//if it's the only possible move, it has just been evaluated, which also means numMoves is equal to 0
 			//we break if the next move is a passing move, or if there are no moves
-			if (moves[move_indices[current_move]] == Board::invalid_index || (!numMoves))
+			if (moves[move_indices[current_move]] == Board::passing_index || (!numMoves))
 			{
 				break;
 			}

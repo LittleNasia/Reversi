@@ -7,7 +7,7 @@
 
 namespace search
 {
-	constexpr int value_inf = 100000;
+	constexpr int value_inf = 10000;
 	constexpr int value_win = value_inf / 10;
 	struct SearchInfo
 	{

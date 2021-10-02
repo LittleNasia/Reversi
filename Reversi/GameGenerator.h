@@ -35,7 +35,7 @@ struct NN_training_entry
 
 struct Game
 {
-	scored_move moves[80];
+	std::vector<scored_move> moves;
 	int game_moves = 0;
 	bool scored = false;
 };
@@ -44,28 +44,19 @@ struct Game
 class GameGenerator
 {
 public:
-	enum file_type
-	{
-		//nsbin, purely moves
-		FILE_UNSCORED,
-		//moves followed by scores
-		FILE_SCORED,
-		//128 bit of bitboards, followed by scores
-		FILE_INPUTS
-	};
 	//games to be written to a single file
-	static constexpr int games_per_file = 10000;
+	static constexpr int games_per_file = 500000;
 	//game will terminate early even if it doesn't finish before this number of moves
 	static constexpr int max_game_size = 70;
 	//chance for a random move, max value is 1028 so the unit is something like a permil but slightly less
-	static constexpr int random_move_chance = 157;
+	static constexpr int random_move_chance = 278;
 	//how many random moves can be played in a selfplay game
-	static constexpr int max_random_moves = 4; 
+	static constexpr int max_random_moves = 6; 
 	//if game reaches this ply, random moves will not be used anymore
-	static constexpr int max_random_move_ply = 20;
+	static constexpr int max_random_move_ply = 30;
 	//how much of a saved score is evaluation, and how much is the pure game result
 	//lambda = 0 -> use purely game results, lambda = 100 -> use purely evaluation, anything inbetween is the interpolation of the two
-	static constexpr int lambda = 100;
+	static constexpr int lambda = 0;
 
 	GameGenerator();
 

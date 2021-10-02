@@ -1,5 +1,6 @@
 #pragma once
 #include "ClippedReLU.h"
+#include <algorithm>
 
 namespace NN
 { 

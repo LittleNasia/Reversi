@@ -1,11 +1,10 @@
 #include "NN_accumulator.h"
 #include "Board.h"
-
+#include <algorithm>
 
 NN::NN_accumulator::NN_accumulator()
 {
-	//set everything to zero
-	std::memset(output, 0, sizeof(output));
+	reset();
 }
 
 void NN::NN_accumulator::read_weights(float* weights_from_file, float* biases_from_file)
@@ -27,6 +26,7 @@ void NN::NN_accumulator::read_weights(float* weights_from_file, float* biases_fr
 				//and keep the weights in range -2,127/64
 				int weight_int = (int)(weights_from_file[index] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
 				weight_int = std::clamp(weight_int, -256, 255);
+				//std::cout << weights_from_file[index] << "\n";
 				weights[row][col] = (int16_t)weight_int;
 			}
 		}
@@ -47,24 +47,34 @@ void NN::NN_accumulator::reset()
 {
 	//set everything to zero
 	std::memset(output, 0, sizeof(output));
-	//the board starts as empty before 0 ply, we put weights of empty square features to output
-	for (int index = 0; index < 64; index++)
-	{
-		for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
-		{
-			output[COLOR_BLACK][neuron] += weights[index + 64 * 3][neuron];
-			output[COLOR_WHITE][neuron] += weights[index + 64 * 3][neuron];
-		}
-	}
-
+	used_config = -1;
 }
 
 //side_to_move is the side that is *making* the move, not the side that is moving *after* the move has been played
 void NN::NN_accumulator::update_accumulator(const NN_accumulator& old_acc, const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move,
-	const Board& b)
+	const Board& b, bool passing_move)
 {
+	
+	int curr_config = b.get_playfield_config();
+	if (curr_config != old_acc.used_config)
+	{
+		//std::cout << "config changed from " << (int)old_acc.used_config << " to " << curr_config << "\n";
+		const auto& bbs = b.get_board();
+		refresh(bbs.white_bb, bbs.black_bb, curr_config);
+		return;
+	}
+	used_config = old_acc.used_config;
+
+	int board_config_offset = curr_config * num_features;
 	std::memcpy(output, old_acc.output, sizeof(output));
+	//in a passing move nothing changes, just the persepctive
+	//we don't have to change anything else
+	if (passing_move)
+	{
+		return;
+	}
 	const Color opposite_side = ((side_to_move == COLOR_BLACK) ? COLOR_WHITE : COLOR_BLACK);
+
 	//the input structure is as follows:
 	//the first 64 neurons are the side_to_move pieces (the side that just made the move), followed by 64 other side pieces
 	//the next 64 neurons are both colors combined and the last 64 are the empty squares
@@ -83,25 +93,21 @@ void NN::NN_accumulator::update_accumulator(const NN_accumulator& old_acc, const
 
 	//it's always only side to move that gains pieces
 
-	int curr_config = b.get_playfield_config();
-	if (curr_config != used_config)
-	{
-		const auto& bbs = b.get_board();
-		refresh(bbs.white_bb, bbs.black_bb, curr_config);
-	}
+	
 	bitboard remaining_added_pieces = added_pieces;
 	while (remaining_added_pieces)
 	{
 		const int bit_index = _lzcnt_u64(remaining_added_pieces) ^ 63;
+		//std::cout << "added " << bit_index << "\n";
 		remaining_added_pieces ^= (1ULL << bit_index);
 		for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
 		{
 			//the current side_to_move has just captured some pieces, good for them, the indices are normal
-			output[side_to_move][neuron] += weights[bit_index + (repeat * 64 * 4)][neuron];
+			output[side_to_move][neuron] += weights[bit_index + side_to_move_offset + board_config_offset][neuron];
 
 			//current side_to_move pieces appear to be opposite_side from the perspective of the opposite_side
 			//we use the bit_index + 64, as it's the one that corresponds to opponent_pieces input 
-			output[opposite_side][neuron] += weights[bit_index + 64 + (repeat * 64 * 4)][neuron];
+			output[opposite_side][neuron] += weights[bit_index + opposite_side_offset + board_config_offset][neuron];
 		}
 	}
 
@@ -112,15 +118,16 @@ void NN::NN_accumulator::update_accumulator(const NN_accumulator& old_acc, const
 	while (remaining_captured_pieces)
 	{
 		const int bit_index = _lzcnt_u64(remaining_captured_pieces) ^ 63;
+		//std::cout << "subtracted " << bit_index << "\n";
 		remaining_captured_pieces ^= (1ULL << bit_index);
 		for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
 		{
 			//the opponent of current side_to_move has just lost pieces
 			//we use the bit_index + 64, as it's the one that corresponds to opponent_pieces input 
-			output[side_to_move][neuron] -= weights[bit_index + 64 + (repeat * 64 * 4)][neuron];
+			output[side_to_move][neuron] -= weights[bit_index + opposite_side_offset + board_config_offset][neuron];
 
 			//current opposite_side pieces appear to be their own from the perspective of the opposite_side
-			output[opposite_side][neuron] -= weights[bit_index + (repeat * 64 * 4)][neuron];
+			output[opposite_side][neuron] -= weights[bit_index + side_to_move_offset + board_config_offset][neuron];
 		}
 	}
 
@@ -130,15 +137,17 @@ void NN::NN_accumulator::update_accumulator(const NN_accumulator& old_acc, const
 	//it's also the only square that gets taken away from the empty squares input
 	bitboard new_move = added_pieces & ~captured_pieces;
 	const int new_move_index = _lzcnt_u64(new_move) ^ 63;
+	//std::cout << "added and subtracted " << new_move_index << "\n";
+	//std::cout << "predicted move " << new_move_index << "\n";
 	for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
 	{
 		//here we use the index + 64*2, because taken square features are the third set of features (each set has size 64)
-		output[side_to_move][neuron] += weights[new_move_index + 64 * 2 + (repeat * 64 * 4)][neuron];
-		output[opposite_side][neuron] += weights[new_move_index + 64 * 2 + (repeat * 64 * 4)][neuron];
+		output[side_to_move][neuron] += weights[new_move_index + taken_squares_offset + board_config_offset][neuron];
+		output[opposite_side][neuron] += weights[new_move_index + taken_squares_offset + board_config_offset][neuron];
 
 		//here we use the index + 64*3, because free square features are the fourth set of features (each set has size 64)
-		output[side_to_move][neuron] -= weights[new_move_index + 64 * 3 + (repeat * 64 * 4)][neuron];
-		output[opposite_side][neuron] -= weights[new_move_index + 64 * 3 + (repeat * 64 * 4)][neuron];
+		output[side_to_move][neuron] -= weights[new_move_index + free_squares_offset + board_config_offset][neuron];
+		output[opposite_side][neuron] -= weights[new_move_index + free_squares_offset + board_config_offset][neuron];
 	}
 
 
@@ -168,5 +177,56 @@ void NN::NN_accumulator::recompute_acc(int16_t* input)
 
 void NN::NN_accumulator::refresh(bitboard white_bb, bitboard black_bb, uint8_t board_config)
 {
+	bitboard bbs[] = { black_bb,white_bb };
+	//set the output to be equal to biases
+	std::memcpy(output[COLOR_WHITE], biases, sizeof(output[COLOR_WHITE]));
+	std::memcpy(output[COLOR_BLACK], biases, sizeof(output[COLOR_BLACK]));
+	int board_config_offset = ((int)board_config) * 64 * 4;
 
+	//handle side to move perspectives
+	for (const auto side_to_move : { COLOR_WHITE, COLOR_BLACK })
+	{
+		Color opposite_side = (side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE);
+		bitboard remaining_added_pieces = bbs[side_to_move];
+		while (remaining_added_pieces)
+		{
+			const int bit_index = _lzcnt_u64(remaining_added_pieces) ^ 63;
+			remaining_added_pieces ^= (1ULL << bit_index);
+			for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+			{
+				//the current side_to_move has just captured some pieces, good for them, the indices are normal
+				output[side_to_move][neuron] += weights[bit_index + side_to_move_offset + board_config_offset][neuron];
+
+				//current side_to_move pieces appear to be opposite_side from the perspective of the opposite_side
+				//we use the bit_index + 64, as it's the one that corresponds to opponent_pieces input 
+				output[opposite_side][neuron] += weights[bit_index + opposite_side_offset + board_config_offset][neuron];
+			}
+		}
+	}
+	//side to move independent inputs
+	bitboard taken_squares = white_bb | black_bb;
+	bitboard empty_squares = ~taken_squares;
+	while (taken_squares)
+	{
+		const int bit_index = _lzcnt_u64(taken_squares) ^ 63;
+		taken_squares ^= (1ULL << bit_index);
+		for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+		{
+			//the current side_to_move has just captured some pieces, good for them, the indices are normal
+			output[COLOR_WHITE][neuron] += weights[bit_index + taken_squares_offset + board_config_offset][neuron];
+			output[COLOR_BLACK][neuron] += weights[bit_index + taken_squares_offset + board_config_offset][neuron];
+		}
+	}
+	while (empty_squares)
+	{
+		const int bit_index = _lzcnt_u64(empty_squares) ^ 63;
+		empty_squares ^= (1ULL << bit_index);
+		for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
+		{
+			//the current side_to_move has just captured some pieces, good for them, the indices are normal
+			output[COLOR_WHITE][neuron] += weights[bit_index + free_squares_offset + board_config_offset][neuron];
+			output[COLOR_BLACK][neuron] += weights[bit_index + free_squares_offset + board_config_offset][neuron];
+		}
+	}
+	used_config = board_config;
 }

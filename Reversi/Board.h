@@ -24,7 +24,7 @@ public:
 	Board();
 	static constexpr int rows = 8;
 	static constexpr int cols = 8;
-	static constexpr int invalid_index = rows * cols;
+	static constexpr int passing_index = rows * cols;
 	static constexpr int max_ply = 100;
 	static inline constexpr unsigned int to_1d(const unsigned int row, const unsigned int col)
 	{
@@ -32,10 +32,10 @@ public:
 	}
 	//using 8 bit per move seems pretty nice storage-wise, allows to copy the entire moves-array so much faster
 	using move_type = uint8_t;
-	using input_type = Eigen::Matrix<ScalarType, rows, cols * NN_input_channels>;
 	//this assumes that there will never be more than 32 moves in a position
 	//32 is a pretty nice number, that 
 	using moves_array = move_type[rows * cols / 2];
+
 	//does NOT check for legality of the move (only to be used from search, in conjecture with get_moves())
 	void do_move(const int square, const bool update_accumulator = true);
 	//does check for legality of the move
@@ -44,6 +44,8 @@ public:
 	const bool do_move(const Point target_square);
 	//gets the available moves list and then makes the move, returning the move made
 	int do_random_move();
+	//does whatever the lowest index move is 
+	int do_first_move();
 	//returns the pointer to the available moves array
 	const move_type* get_moves();
 	void print_board();
