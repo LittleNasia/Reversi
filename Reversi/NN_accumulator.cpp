@@ -24,7 +24,7 @@ void NN::NN_accumulator::read_weights(float* weights_from_file, float* biases_fr
 				//however that would imply the int8 weights can only hold values from -128/127 (-128 divided by 127, scaling factor of input) to 127/127, which is not what we want
 				//instead, I just expand the range of int values for weights to be -256, 255, which allows me to use both input scaling factor
 				//and keep the weights in range -2,127/64
-				int weight_int = (int)(weights_from_file[index] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
+				int weight_int = (int)std::round(weights_from_file[index] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
 				weight_int = std::clamp(weight_int, -256, 255);
 				//std::cout << weights_from_file[index] << "\n";
 				weights[row][col] = (int16_t)weight_int;
@@ -34,7 +34,7 @@ void NN::NN_accumulator::read_weights(float* weights_from_file, float* biases_fr
 		{
 			//biases are effectively weights, same rules apply
 			//in other layers they are not effectively weights, but in this case they are
-			int bias_int = (int)(biases_from_file[neuron] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
+			int bias_int = (int)std::round(biases_from_file[neuron] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
 			bias_int = std::clamp(bias_int, -256, 255);
 			biases[neuron] = (int16_t)bias_int;
 		}
@@ -98,7 +98,6 @@ void NN::NN_accumulator::update_accumulator(const NN_accumulator& old_acc, const
 	while (remaining_added_pieces)
 	{
 		const int bit_index = _lzcnt_u64(remaining_added_pieces) ^ 63;
-		//std::cout << "added " << bit_index << "\n";
 		remaining_added_pieces ^= (1ULL << bit_index);
 		for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
 		{
@@ -200,23 +199,15 @@ void NN::NN_accumulator::refresh(bitboard white_bb, bitboard black_bb, uint8_t b
 				//current side_to_move pieces appear to be opposite_side from the perspective of the opposite_side
 				//we use the bit_index + 64, as it's the one that corresponds to opponent_pieces input 
 				output[opposite_side][neuron] += weights[bit_index + opposite_side_offset + board_config_offset][neuron];
+
+				output[COLOR_WHITE][neuron] += weights[bit_index + taken_squares_offset + board_config_offset][neuron];
+				output[COLOR_BLACK][neuron] += weights[bit_index + taken_squares_offset + board_config_offset][neuron];
 			}
 		}
 	}
 	//side to move independent inputs
 	bitboard taken_squares = white_bb | black_bb;
 	bitboard empty_squares = ~taken_squares;
-	while (taken_squares)
-	{
-		const int bit_index = _lzcnt_u64(taken_squares) ^ 63;
-		taken_squares ^= (1ULL << bit_index);
-		for (int neuron = 0; neuron < layer_sizes[1]; neuron++)
-		{
-			//the current side_to_move has just captured some pieces, good for them, the indices are normal
-			output[COLOR_WHITE][neuron] += weights[bit_index + taken_squares_offset + board_config_offset][neuron];
-			output[COLOR_BLACK][neuron] += weights[bit_index + taken_squares_offset + board_config_offset][neuron];
-		}
-	}
 	while (empty_squares)
 	{
 		const int bit_index = _lzcnt_u64(empty_squares) ^ 63;

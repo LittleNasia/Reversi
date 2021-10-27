@@ -2,6 +2,8 @@
 #include "Utils.h"
 #include "TT.h"
 #include "Evaluate.h"
+#include "MovePicker.h"
+
 #include <unordered_map>
 #include <iostream>
 #include <chrono>
@@ -11,13 +13,10 @@ using namespace std::chrono;
 #include "TT.h"
 namespace search
 {
-	
 
-	//TT transposition_table;
-	thread_local TT transposition_table;
 	unsigned long long Zoribst[64][2];
 	unsigned long long ZoribstSideToMove[2];
-	
+
 
 	void init()
 	{
@@ -94,59 +93,11 @@ namespace search
 		return value_inf;
 	}
 
-	inline constexpr void order_moves(const TT_entry& entry, const Board::moves_array moves, Board::moves_array move_indices, const int num_moves, const bool found_tt_entry, int depth = 0)
-	{
-		//TT move should be the absolute first move that should be searched
-		//TT exists for a reason lol
-		int heuristics_used = 0;
-		if (found_tt_entry)
-		{
-			std::swap(move_indices[0], move_indices[entry.move]);
-			heuristics_used++;
-		}
-
-		//put the corner moves first, or right after a TT move if such exists
-		//this is under the assumption, that contesting for corners is good
-		for (int index = heuristics_used; index < (num_moves); index++)
-		{
-			if ((1ULL << moves[move_indices[index]]) & corners)
-			{
-				//std::cout << (int)moves[move_indices[index]] << "/" << (int)moves[move_indices[num_moves - 1 - c_square_moves]] << "\n";
-				//std::cout << (int)move_indices[index] << "\\" << (int)move_indices[num_moves - 1 - c_square_moves] << "    " << num_moves << "\n\n";
-				std::swap(move_indices[index], move_indices[heuristics_used++]);
-				//std::cout << (int)moves[move_indices[index]] << "\n";
-			}
-		}
-
-		//use any other heuristics
-		int c_square_moves = 0;
-		bool has_62 = false;
-		//order the moves by searching moves on C-squares last
-		for (int index = heuristics_used; index < (num_moves - c_square_moves); index++)
-		{
-			if ((1ULL << moves[move_indices[index]]) & C_squares)
-			{
-				if (depth == 10)
-				{
-					//std::cout << (int)moves[move_indices[index]] << "/" << (int)moves[move_indices[num_moves - 1 - c_square_moves]] << "\n";
-					//std::cout << (int)move_indices[index] << "\\" << (int)move_indices[num_moves - 1 - c_square_moves] << "    " << num_moves << "\n\n";
-				}
-				std::swap(move_indices[index], move_indices[num_moves - 1 - c_square_moves]);
-				//std::cout << (int)moves[move_indices[index]] << "\n";
-				if ((index) != (num_moves - 1 - c_square_moves))
-				{
-					index--;
-				}
-				c_square_moves++;
-			}
-		}
-		//std::cout << "\n";
-
-	}
-
+	
+	template<bool root = false>
 	int search(Board& b, int depth, int alpha, int beta, SearchInfo& s, bool doNull = true)
 	{
-		
+
 		if (b.is_over())
 		{
 			nodes++;
@@ -167,27 +118,17 @@ namespace search
 			nodes++;
 			const auto score = s.eval_function(b);
 			return score;
-			//return rng::rng()%0xFF;
 		}
 
 		int best_move = 0;
 		int best_score = -value_inf;
 		int TT_flag = TT_entry::flag_alpha;
 
-
-		Board::moves_array moves;
-		//initialize the array that holds move indices, so that if a move ordering change occurs, it will be reflected in this array
-		Board::moves_array move_indices = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 };
-
-		std::memcpy(moves, b.get_moves(), sizeof(Board::moves_array));
-		const int numMoves = b.get_num_moves();
-
-		
-
 		const unsigned long long key = hash(b);
 		bool found = false;
 		const auto& entry = transposition_table.get(key, found);
 
+		int eval;
 		//we found the entry, let's see if the stored position is a transposition, or just info from previous search
 		if (found)
 		{
@@ -199,45 +140,110 @@ namespace search
 				return score;
 			}
 		}
+		eval = s.eval_function(b);
+		s.eval_stack[depth] = eval;
+		const bool improving = root ? false : -s.eval_stack[depth + 1] < (eval - 60);
+		
+		//reverse futility pruning
+		//speeds up the search but doesn't impact the result in any meaningful way
+		if (
+			(depth <= 6)
+			&& (eval - reverse_futility_margin * depth >= beta)
+			&& (std::abs(beta) < value_win)
+		   )
+		{
+			return eval;
+		}
+
+		//ProbCut
+		//static constexpr int larger_depth = 8;
+		//static constexpr float T = 2;
+		//static constexpr int lower_depth = 4;
+		//static constexpr float a_linear = 1.01485012;
+		//static constexpr float b_linear = 19.85;
+		//static constexpr float sigma = 199.93;
+		//if (depth == larger_depth)
+		//{
+		//	int bound = beta + 80;
+		//	if (std::abs(bound) < value_win && eval > bound)
+		//	{
+		//		int value = -search<false>(b, lower_depth, -bound, -bound + 1, s);
+		//		if (value >= bound)
+		//		{
+		//			return beta;
+		//		}
+		//	}
+		//	/*bound = (-T * sigma + alpha - b_linear) / a_linear;
+		//	if (std::abs(bound) < value_win)
+		//	{
+		//		int value = -search<false>(b, lower_depth, -bound - 1, -bound, s);
+		//		if (value <= bound)
+		//		{
+		//			return alpha;
+		//		}
+		//	}*/
+
+		//}
+			
 
 		//null move pruning
-		if ((numMoves) && (doNull) && (depth >= 5))
+		/*
+		if ((numMoves) && (doNull) && (depth > 2))
 		{
 			b.do_move(Board::passing_index);
-			int value = -search(b, depth - 4, -beta, -beta + 1, s, false);
+			int value = -search<false>(b, depth - 5, -beta, -beta + 1, s, false);
 			b.undo_move();
 			if (value >= beta)
 			{
 				return beta;
 			}
 		}
+		*/
 
-		//order the move indices
-		order_moves(entry, moves, move_indices, numMoves, found, depth);
+
+		MovePicker mp(b, entry, found, s);
 
 		bool searching_pv = true;
 		int current_move = 0;
+		int played = 0;
 		//iterate over moves 
 		while (true)
 		{
 			s.ply++;
-			b.do_move(moves[move_indices[current_move++]]);
+			const auto current_move = mp.get_move();
+			if (mp.get_move_count() && (current_move == Board::passing_index))
+			{
+				break;
+			}
 			
+			b.do_move(current_move);
+			int extension = (current_move == Board::passing_index) ? 1 : 0;
 
 			//principal variation search
 			int score;
+			//score = -search<false>(b, depth - 1 + extension, -beta, -alpha, s,doNull);
+			
 			if (searching_pv)
 			{
-				score = -search(b, depth - 1, -beta, -alpha,s);
+				score = -search<false>(b, depth - 1, -beta, -alpha, s, doNull);
 			}
 			else
 			{
-				score = -search(b, depth - 1, -alpha - 1, -alpha,s);
+				//late move reductions
+				int reduction = 1;
+				if ((depth > 4) && (played > mp.get_move_count() * 5/7) && (improving))
+				{
+					//reduction += 1;
+				}
+				
+				score = -search<false>(b, depth - reduction + extension, -alpha - 1, -alpha, s, doNull);
+				//we have to research
 				if (score > alpha && score < beta)
 				{
-					score = -search(b, depth - 1, -beta, -alpha,s);
+					score = -search<false>(b, depth - 1 + extension, -beta, -alpha, s, doNull);
 				}
 			}
+			played++;
 
 			b.undo_move();
 			s.ply--;
@@ -245,9 +251,9 @@ namespace search
 			if (score > best_score)
 			{
 				//we already incremented current_move, so we have to subtract 1
-				best_move = move_indices[current_move - 1];
+				best_move = current_move;
 				best_score = score;
-			
+
 				if (score > alpha)
 				{
 					alpha = score;
@@ -258,19 +264,63 @@ namespace search
 						transposition_table.store({ key, best_move, beta, depth, TT_entry::flag_beta });
 						return beta;
 					}
+					//s.history_data[best_move] += depth * depth;
 				}
 			}
-
-			//we don't check passing_index (passing moves), unless it is the only possible move
-			//if it's the only possible move, it has just been evaluated, which also means numMoves is equal to 0
-			//we break if the next move is a passing move, or if there are no moves
-			if (moves[move_indices[current_move]] == Board::passing_index || (!numMoves))
+			if (!mp.get_move_count())
 			{
 				break;
 			}
 		}
-		transposition_table.store({ key, best_move, alpha, depth, TT_flag });
-		return alpha;
+		transposition_table.store({ key, best_move, alpha, depth, TT_flag }, root);
+		return best_score;
+	}
+	constexpr bool Root = true;
+	void aspiration_window(Board& b, int depth, int score, SearchInfo& s)
+	{
+		int alpha = -value_inf;
+		int beta = value_inf;
+		int delta = window_size;
+
+		if (depth >= aspiration_window_depth)
+		{
+			alpha = std::max(-value_win-1, score - delta);
+			beta = std::min(value_win+1, score + delta);
+		}
+		int failed_low = 0;
+		int failed_high = 0;
+
+		while (true)
+		{
+			s.reset();
+			search<Root>(b, depth, alpha, beta, s);
+			int curr_score;
+			unsigned long long key = hash(b);
+			bool found;
+			const auto& entry = transposition_table.get(key, found);
+			curr_score = entry.score;
+			if ((curr_score < beta) && (curr_score > alpha))
+			{
+				return;
+			}
+			else if (curr_score <= alpha)
+			{
+				//fail-low
+				failed_low++;
+				beta = (alpha + beta) / 2;
+				alpha = std::max(-value_win - 1, alpha - delta);
+				
+				//std::cout << "fail low\n";
+			}
+			else if (curr_score >= beta)
+			{
+				failed_high++;
+				beta = std::min(value_win+1, beta + delta);
+				
+				//std::cout << "fail high\n";
+			}
+			delta *= 1.5;
+		}
 	}
 
 	int search_move(Board& b, int depth, bool print, int& score, SearchInfo& s)
@@ -282,22 +332,24 @@ namespace search
 		auto start_iterative = high_resolution_clock::now();
 		//iterative deepening
 		s.ply = 0;
+		int curr_score = 0;
 		for (int d = 1; d <= depth; d++)
 		{
+			//
 			auto start = high_resolution_clock::now();
-			search(b, d, -value_inf, value_inf,s, false);
+			aspiration_window(b, d, curr_score, s);
 			auto stop = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(stop - start);
 
-			
 			unsigned long long key = hash(b);
 			bool found;
 			const auto& entry = transposition_table.get(key, found);
 			int score = entry.score;
-			if(print)
+			curr_score = score;
+			if (print)
 				std::cout << "depth: " << d << " moves : ";
 			int num_moves = 0;
-			
+
 			while (true)
 			{
 				unsigned long long key = hash(b);
@@ -307,9 +359,9 @@ namespace search
 				{
 					const auto moves = b.get_moves();
 					if (print)
-						std::cout << (int)moves[entry.move] << " ";
+						std::cout << (int)entry.move << " ";
 					num_moves++;
-					b.do_move(moves[entry.move]);
+					b.do_move(entry.move);
 				}
 				else
 				{
@@ -328,7 +380,7 @@ namespace search
 			auto search_duration_so_far = duration_cast<microseconds>(now - start_iterative);
 			if (print)
 				std::cout << " nodes: " << nodes << "  nodes per second: " << (int)((float)nodes / (((float)duration.count() + 1) / 1000000)) << "  score: " << score << "  time elapsed: "
-					<< ((float)search_duration_so_far.count() + 1) / 1000000 << "\n";;
+				<< ((float)search_duration_so_far.count() + 1) / 1000000 << "\n";;
 			nodes = 0;
 		}
 
@@ -356,6 +408,6 @@ namespace search
 		//transposition_table.clear();
 
 		//save the searched score, return the move
-		return score= entry.score, b.get_moves()[best_move_index];
+		return score = entry.score, entry.move;
 	}
 }

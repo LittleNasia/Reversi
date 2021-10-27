@@ -8,28 +8,7 @@ Board::Board()
 	new_game();
 }
 
-void print_bitboard(bitboard bb)
-{
-	int index = 63;
-	for (int row = 0; row < 8; row++)
-	{
-		for (int col = 0; col < 8; col++)
-		{
-			std::cout << "[";
-			if ((1ULL << index) & bb)
-			{
-				std::cout << "X";
-			}
-			else
-			{
-				std::cout << " ";
-			}
-			std::cout << "]";
-			index--;
-		}
-		std::cout << "\n";
-	}
-}
+
 
 void Board::print_board()
 {
@@ -81,16 +60,22 @@ void Board::new_game()
 	side_to_move = COLOR_BLACK;
 	bb.black_bb = 0 | (1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4));
 	bb.white_bb = 0 | (1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3));
+	first_moves.black_bb = 0ULL;
+	first_moves.white_bb = 0ULL;
 	ply = 0;
 	forced_passes = 0;
 	result = COLOR_NONE;
+	move_history[ply].first_moves = first_moves;
 	move_history[ply].bb.white_bb = bb.white_bb;
 	move_history[ply].bb.black_bb = bb.black_bb;
 	//std::cout << bb.white_bb << "\n";
 	//std::cout << bb.black_bb << "\n";
 	move_history[ply].forced_passes = 0;
-	accumulator_history[0].reset();
-	accumulator_history[0].refresh(bb.white_bb, bb.black_bb,0);
+	if (use_nnue)
+	{
+		accumulator_history[0].reset();
+		accumulator_history[0].refresh(bb.white_bb, bb.black_bb, 0);
+	}
 }
 
 const Board::move_type* Board::get_moves()
@@ -187,8 +172,10 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 		uint32_t move_masks = 0;
 		auto& own_bb = side_to_move == COLOR_WHITE ? bb.white_bb : bb.black_bb;
 		auto& enemy_bb = side_to_move == COLOR_WHITE ? bb.black_bb : bb.white_bb;
+		auto& own_bb_first_move = side_to_move == COLOR_WHITE ? first_moves.white_bb : first_moves.black_bb;
 		const auto& empty = ~(own_bb | enemy_bb);
 		own_bb ^= (1ULL << move);
+		own_bb_first_move ^= (1ULL << move);
 		bitboard total_victims = 0ULL;
 		
 		for (int direction = DIRECTION_UP_LEFT; direction < DIRECTION_NONE; direction++)
@@ -246,7 +233,7 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 				}
 			}
 		}
-		if (update_accumulator)
+		if (use_nnue)
 			//std::cout << "victims " << victims << "\n";
 			//accumulator_history[ply].refresh(bb.white_bb, bb.black_bb, get_playfield_config());
 			accumulator_history[ply].update_accumulator(accumulator_history[ply - 1], total_victims | (1ULL << move), total_victims, side_to_move, *this);
@@ -256,14 +243,13 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 	{
 		forced_passes++;
 		move_history[ply].forced_passes = forced_passes;
-		if (update_accumulator)
+		if (use_nnue)
 			accumulator_history[ply].update_accumulator(accumulator_history[ply - 1], 0, 0, side_to_move, *this, true);
 		
 	}
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
-	move_history[ply].bb.white_bb = bb.white_bb;
-	move_history[ply].bb.black_bb = bb.black_bb;
-	
+	move_history[ply].bb = bb;
+	move_history[ply].first_moves = first_moves;
 }
 
 void Board::do_move(const int square, const bool update_accumulator)
@@ -315,7 +301,7 @@ const bool Board::do_move_is_legal(const int square, const bool update_accumulat
 	}
 }
 
-int Board::do_random_move()
+int Board::do_random_move(bool update_accumulator)
 {
 	ply++;
 	get_moves();
@@ -323,12 +309,13 @@ int Board::do_random_move()
 	if (num_moves)
 	{
 		move = rng::rng() % num_moves;
-		capture(available_moves[move], true);
+		capture(available_moves[move], update_accumulator);
 	}
 	else
 	{
 		move = passing_index;
-		capture(move, true);
+		capture(move, update_accumulator);
+		move = 0;
 	}
 	return available_moves[move];
 }	
@@ -344,39 +331,86 @@ int Board::do_first_move()
 
 void Board::undo_move()
 {
-	forced_passes = std::max(forced_passes - 1, 0LL);
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 	ply--;
 	bb.white_bb = move_history[ply].bb.white_bb;
 	bb.black_bb = move_history[ply].bb.black_bb;
 	forced_passes = move_history[ply].forced_passes;
+	first_moves = move_history[ply].first_moves;
 }
 
-
+enum game_phase
+{
+	PHASE_EARLY,
+	PHASE_MID,
+	PHASE_LATE,
+	PHASE_END
+};
 const uint8_t Board::get_playfield_config() const
 {
-	static constexpr bitboard masks[] =
+	static constexpr bitboard masks[4][6] =
 	{
-		(1ULL << 10) | (1ULL << 17),
-		(1ULL << 41) | (1ULL << 50),
-		(1ULL << 46) | (1ULL << 53),
-		(1ULL << 3) | (1ULL << 4),
-		(1ULL << 24) | (1ULL << 32),
-		(1ULL << 31) | (1ULL << 39),
-		(1ULL << 60) | (1ULL << 59),
-		(1ULL << 13) | (1ULL << 22)
+		{
+		(1ULL << 30 | 1ULL << 17 | 1ULL << 54 | 1ULL << 50),
+		(1ULL << 53 | 1ULL << 33 | 1ULL << 46 | 1ULL << 25),
+		(1ULL << 38 | 1ULL << 52 | 1ULL << 10 | 1ULL << 51),
+		(1ULL << 9 | 1ULL << 13 | 1ULL << 45),
+		(1ULL << 22 | 1ULL << 12 | 1ULL << 11 | 1ULL << 41),
+		(1ULL << 14 | 1ULL << 49 | 1ULL << 18)
+		},
+		{
+		(1ULL << 0 | 1ULL << 63 | 1ULL << 51 | 1ULL << 5),
+		(1ULL << 14 | 1ULL << 7 | 1ULL << 4 | 1ULL << 23),
+		(1ULL << 32 | 1ULL << 39 | 1ULL << 31 | 1ULL << 24),
+		(1ULL << 47 | 1ULL << 54 | 1ULL << 53 | 1ULL << 52),
+		(1ULL << 3 | 1ULL << 9 | 1ULL << 16 | 1ULL << 2),
+		(1ULL << 50 | 1ULL << 56 | 1ULL << 40 | 1ULL << 49)
+		},
+		{
+		(1ULL << 57 | 1ULL << 56),
+		(1ULL << 15 | 1ULL << 7),
+		(1ULL << 8 | 1ULL << 1),
+		(1ULL << 62 | 1ULL << 55),
+		(1ULL << 63 | 1ULL << 48),
+		(1ULL << 6 | 1ULL << 0)
+		},
+		{
+		(1ULL << 55 | 1ULL << 1),
+		(1ULL << 48 | 1ULL << 63),
+		(1ULL << 7 | 1ULL << 15),
+		(1ULL << 0 | 1ULL << 8),
+		(1ULL << 57 | 1ULL << 56),
+		(1ULL << 62 | 1ULL << 6)
+		}
 	};
 	bitboard combined_bb = bb.white_bb | bb.black_bb;
+	const int popcnt = __popcnt64(combined_bb);
+	int game_phase_index = 0;
+	game_phase phase = PHASE_EARLY;
+	if (popcnt >= 49)
+	{
+		game_phase_index = 64 * 3;
+		phase = PHASE_END;
+		combined_bb = ~combined_bb;
+	}
+	else if (popcnt >= 34)
+	{
+		game_phase_index = 64 * 2;
+		phase = PHASE_LATE;
+	}
+	else if (popcnt >= 19)
+	{
+		game_phase_index = 64 * 1;
+		phase = PHASE_MID;
+	}
 	uint8_t result = 0;
 
-	for (int bit_index = 0; bit_index <8; bit_index++)
+	for (int bit_index = 0; bit_index <6; bit_index++)
 	{
-		//print_bitboard(masks[bit_index]);
-		if ((combined_bb & masks[bit_index]))
+		if ((combined_bb & masks[phase][bit_index]))
 		{
 			result |= (1 << bit_index);
 		}
 	}
-	return result;
-
+	return game_phase_index + result;
 }

@@ -93,7 +93,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>32000000</StackReserveSize>
+      <StackReserveSize>100000000</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -111,7 +111,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>32000000</StackReserveSize>
+      <StackReserveSize>100000000</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -126,7 +126,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>32000000</StackReserveSize>
+      <StackReserveSize>100000000</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -144,13 +144,16 @@
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>32000000</StackReserveSize>
+      <StackReserveSize>100000000</StackReserveSize>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -158,7 +161,9 @@
     <ClCompile Include="BoardEvaluator.cpp" />
     <ClCompile Include="Evaluate.cpp" />
     <ClCompile Include="GameGenerator.cpp" />
+    <ClCompile Include="MovePicker.cpp" />
     <ClCompile Include="NN_accumulator.cpp" />
+    <ClCompile Include="PositionPicker.cpp" />
     <ClCompile Include="Reversi.cpp" />
     <ClCompile Include="Search.cpp" />
     <ClCompile Include="TT.cpp" />
@@ -171,7 +176,9 @@
     <ClInclude Include="Evaluate.h" />
     <ClInclude Include="GameGenerator.h" />
     <ClInclude Include="LinearLayer.h" />
+    <ClInclude Include="MovePicker.h" />
     <ClInclude Include="NN_accumulator.h" />
+    <ClInclude Include="PositionPicker.h" />
     <ClInclude Include="Search.h" />
     <ClInclude Include="TT.h" />
     <ClInclude Include="Utils.h" />

@@ -19,10 +19,12 @@ namespace NN
 		int Evaluate(const Board& b);
 		void test();
 	private:
-		ClippedReLU<32, true> ReLU_layer_1;
-		LinearLayer<32, 32> layer_2;
-		ClippedReLU<32, true> ReLU_layer_2;
-		LinearLayer<32, 1> layer_output;
+		ClippedReLU<layer_sizes[1], true> ReLU_layer_1;
+		LinearLayer<layer_sizes[1], layer_sizes[2]> layer_2;
+		ClippedReLU<layer_sizes[2], true> ReLU_layer_2;
+		LinearLayer<layer_sizes[2], layer_sizes[3]> layer_3;
+		ClippedReLU<layer_sizes[3], true> ReLU_layer_3;
+		LinearLayer<layer_sizes[3], layer_sizes[4]> layer_output;
 	};
 
 	inline thread_local BoardEvaluator be;

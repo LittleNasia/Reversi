@@ -1,6 +1,8 @@
 #pragma once
+
 #include <intrin.h>
 #include <cstdint>
+
 using bitboard = uint64_t;;
 
 inline constexpr bitboard up(const bitboard b)
@@ -36,4 +38,28 @@ inline constexpr bitboard right_up(const bitboard b)
 inline constexpr bitboard right_down(const bitboard b)
 {
 	return  down(right(b));
+}
+
+#include <iostream>
+inline void print_bitboard(const bitboard bb)
+{
+	int index = 63;
+	for (int row = 0; row < 8; row++)
+	{
+		for (int col = 0; col < 8; col++)
+		{
+			std::cout << "[";
+			if ((1ULL << index) & bb)
+			{
+				std::cout << "X";
+			}
+			else
+			{
+				std::cout << " ";
+			}
+			std::cout << "]";
+			index--;
+		}
+		std::cout << "\n";
+	}
 }

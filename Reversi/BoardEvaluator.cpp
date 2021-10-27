@@ -7,20 +7,25 @@ NN::BoardEvaluator::BoardEvaluator()
 	float accumulator_weights[layer_sizes[0]][layer_sizes[1]];
 	float layer_1_weights[layer_sizes[1]][layer_sizes[2]];
 	float layer_2_weights[layer_sizes[2]][layer_sizes[3]];
+	float layer_3_weights[layer_sizes[3]][layer_sizes[4]];
 	float accumulator_biases[layer_sizes[1]];
 	float layer_1_biases[layer_sizes[2]];
 	float layer_2_biases[layer_sizes[3]];
+	float layer_3_biases[layer_sizes[4]];
 	input.read((char*)accumulator_weights, sizeof(accumulator_weights));
 	input.read((char*)accumulator_biases, sizeof(accumulator_biases));
 	input.read((char*)layer_1_weights, sizeof(layer_1_weights));
 	input.read((char*)layer_1_biases, sizeof(layer_1_biases));
 	input.read((char*)layer_2_weights, sizeof(layer_2_weights));
 	input.read((char*)layer_2_biases, sizeof(layer_2_biases));
+	input.read((char*)layer_3_weights, sizeof(layer_3_weights));
+	input.read((char*)layer_3_biases, sizeof(layer_3_biases));
 
 
 	NN_accumulator::read_weights((float*)accumulator_weights, (float*)accumulator_biases);
 	layer_2.read_weights((float*)layer_1_weights, (float*)layer_1_biases);
-	layer_output.read_weights((float*)layer_2_weights, (float*)layer_2_biases);
+	layer_3.read_weights((float*)layer_2_weights, (float*)layer_2_biases);
+	layer_output.read_weights((float*)layer_3_weights, (float*)layer_3_biases);
 }
 
 void NN::BoardEvaluator::test()
@@ -35,27 +40,44 @@ void NN::BoardEvaluator::test()
 	//simple forward pass
 	ReLU_layer_1.forward(acc.output[COLOR_WHITE]);
 	std::cout << "\n\n\nfirst layer relu ";
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < layer_sizes[1]; i++)
 	{
 		std::cout << (float)ReLU_layer_1.output[i] / 127 << " ";
 	}
 	
 	layer_2.forward(ReLU_layer_1.output);
 	std::cout << "\n\n\nlayer 2 ";
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < layer_sizes[2]; i++)
 	{
 		std::cout << (float)layer_2.output[i] / 127 << " ";
 	}
 
 	ReLU_layer_2.forward(layer_2.output);
 	std::cout << "\n\n\nlayer 2 relu ";
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < layer_sizes[2]; i++)
 	{
 		std::cout << (float)ReLU_layer_2.output[i] / 127 << " ";
 	}
 
-	layer_output.forward(ReLU_layer_2.output);
+	layer_3.forward(ReLU_layer_2.output);
+	std::cout << "\n\n\nlayer 2 relu ";
+	for (int i = 0; i < layer_sizes[3]; i++)
+	{
+		std::cout << (float)layer_3.output[i] / 127 << " ";
+	}
+
+	ReLU_layer_3.forward(layer_3.output);
+	std::cout << "\n\n\nlayer 2 relu ";
+	for (int i = 0; i < layer_sizes[3]; i++)
+	{
+		std::cout << (float)ReLU_layer_3.output[i] / 127 << " ";
+	}
+
+	layer_output.forward(ReLU_layer_3.output);
 	std::cout<<"\n\n\nzeros " << (float)layer_output.output[0] / 127 << "\n\n\n\n\n\n";
+
+
+
 
 	for (auto& val : input)
 	{
@@ -65,26 +87,40 @@ void NN::BoardEvaluator::test()
 	acc.recompute_acc(input);
 	ReLU_layer_1.forward(acc.output[COLOR_WHITE]);
 	std::cout << "\n\n\nfirst layer relu ";
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < layer_sizes[1]; i++)
 	{
-		std::cout << (float)ReLU_layer_1.output[i]/127 << " ";
+		std::cout << (float)ReLU_layer_1.output[i] / 127 << " ";
 	}
 
 	layer_2.forward(ReLU_layer_1.output);
 	std::cout << "\n\n\nlayer 2 ";
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < layer_sizes[2]; i++)
 	{
 		std::cout << (float)layer_2.output[i] / 127 << " ";
 	}
 
 	ReLU_layer_2.forward(layer_2.output);
 	std::cout << "\n\n\nlayer 2 relu ";
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < layer_sizes[2]; i++)
 	{
 		std::cout << (float)ReLU_layer_2.output[i] / 127 << " ";
 	}
 
-	layer_output.forward(ReLU_layer_2.output);
+	layer_3.forward(ReLU_layer_2.output);
+	std::cout << "\n\n\nlayer 2 relu ";
+	for (int i = 0; i < layer_sizes[3]; i++)
+	{
+		std::cout << (float)layer_3.output[i] / 127 << " ";
+	}
+
+	ReLU_layer_3.forward(layer_3.output);
+	std::cout << "\n\n\nlayer 2 relu ";
+	for (int i = 0; i < layer_sizes[3]; i++)
+	{
+		std::cout << (float)ReLU_layer_3.output[i] / 127 << " ";
+	}
+
+	layer_output.forward(ReLU_layer_3.output);
 	std::cout << "\n\nones " << (float)layer_output.output[0]/127 << "\n";
 }
 
@@ -112,6 +148,8 @@ int NN::BoardEvaluator::Evaluate(const Board& b)
 	///	std::cout << (float)ReLU_layer_2.output[i] / 127 << " ";
 	}
 	///std::cout << "\n\n\n\n";
-	layer_output.forward(ReLU_layer_2.output);
-	return tanh((float)layer_output.output[0]/127) * 1000;
+	layer_3.forward(ReLU_layer_2.output);
+	ReLU_layer_3.forward(layer_3.output);
+	layer_output.forward(ReLU_layer_3.output);
+	return std::tanh((float)layer_output.output[0]/127) * 1000;
 }

@@ -14,6 +14,7 @@ struct playfield_bitboard
 struct Move
 {
 	playfield_bitboard bb;
+	playfield_bitboard first_moves;
 	int64_t forced_passes;
 };
 
@@ -37,13 +38,13 @@ public:
 	using moves_array = move_type[rows * cols / 2];
 
 	//does NOT check for legality of the move (only to be used from search, in conjecture with get_moves())
-	void do_move(const int square, const bool update_accumulator = true);
+	void do_move(const int square, const bool update_accumulator = use_nnue);
 	//does check for legality of the move
-	const bool do_move_is_legal(const int square, const bool update_accumulator = true);
+	const bool do_move_is_legal(const int square, const bool update_accumulator = use_nnue);
 	//if you want to make a move using coordinates, go ahead, define it first though
 	const bool do_move(const Point target_square);
 	//gets the available moves list and then makes the move, returning the move made
-	int do_random_move();
+	int do_random_move(bool update_accumulator = true);
 	//does whatever the lowest index move is 
 	int do_first_move();
 	//returns the pointer to the available moves array
@@ -54,11 +55,13 @@ public:
 
 	const uint8_t get_playfield_config() const;
 	const playfield_bitboard& get_board() const { return bb; }
+	const playfield_bitboard& get_first_moves() const { return first_moves; }
 	const int get_num_moves() const { return num_moves; }
 	const int get_score() const { return __popcnt64(bb.black_bb) - __popcnt64(bb.white_bb); }
 	const int is_over() const { return forced_passes > 1; }
 	const int get_ply() const { return ply; }
 	const Color get_side_to_move() const { return side_to_move; }
+	
 	//returns the output of the accumulator from the perspective of the current side to move 
 	const int16_t* get_current_accumulator_output() const { return accumulator_history[ply].output[side_to_move]; }
 private:
@@ -69,6 +72,7 @@ private:
 	Move move_history[max_ply];
 	moves_array available_moves;
 	playfield_bitboard bb;
+	playfield_bitboard first_moves;
 	int64_t forced_passes;
 	Color side_to_move;
 	Color result;

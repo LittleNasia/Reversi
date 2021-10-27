@@ -23,9 +23,9 @@ struct Bucket
 class TT
 {
 public:
-	constexpr static unsigned int size = 2<<22;
+	constexpr static unsigned int size = 2<<20;
 	void clear();
-	void store(const TT_entry& entry);
+	void store(const TT_entry& entry, bool always_replace = false);
 	const TT_entry& get(const TT_entry& entry, bool& found);
 	const TT_entry& get(unsigned long long posKey, bool& found);
 private:

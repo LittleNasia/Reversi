@@ -8,7 +8,7 @@ void TT::clear()
 	std::memset(_TT, 0, sizeof(_TT));
 }
 
-void TT::store(const TT_entry& entry)
+void TT::store(const TT_entry& entry, bool always_replace)
 {
 	//https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
 	const int index = ((uint32_t)entry.posKey * (uint64_t)size) >> 32;
@@ -27,7 +27,8 @@ void TT::store(const TT_entry& entry)
 			//replace the same position, or replace based on depth
 			//higher depth elements are more important, replace based on that 
 			//the same position replacement is mostly to guarantee we have the rootPos stored at the end of the serach, no matter what
-			if((bucket_elem.posKey == entry.posKey) || (bucket_elem.depth <= entry.depth))
+			//why is it the first condition when it's the least likely? don't ask
+			if((bucket_elem.posKey == entry.posKey) || (bucket_elem.depth <= entry.depth) || always_replace)
 			{
 				bucket_elem = entry;
 				return;

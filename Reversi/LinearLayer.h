@@ -8,7 +8,7 @@ namespace NN
 	struct LinearLayer
 	{
 		int16_t output[out_neurons];
-		int8_t weights[in_neurons][out_neurons];
+		int8_t weights[out_neurons][in_neurons];
 		int16_t biases[out_neurons];
 
 		LinearLayer()
@@ -24,14 +24,16 @@ namespace NN
 
 		void read_weights(float* weights_from_file, float* biases_from_file)
 		{
-			for (int col=0, index = 0 ; col < out_neurons; col++)
+			for (int col=0, index = 0 ; col < in_neurons; col++)
 			{
-				for (int row = 0; row < in_neurons; row++, index++)
+				for (int row = 0; row < out_neurons; row++, index++)
 				{
 					//unlike in the accumulator, no funny rules apply here, the input incoming to the layer is scalled correctly
 					//this means the calculation can be done perfectly fine using normal int8 weights and their scaling factors
-					int weight_int = (int)(weights_from_file[index] * weight_scaling_factor);
+					int weight_int = (int)std::round(weights_from_file[index] * weight_scaling_factor);
 					weight_int = std::clamp(weight_int, -128, 127);
+					//std::cout << weights_from_file[index] << "\n";
+					//std::cout << weight_int << "\n";
 					weights[row][col] = (int8_t)weight_int;
 				}
 			}
@@ -43,7 +45,8 @@ namespace NN
 				//input_value(input (1) * input_scaling_factor) * weight_value(bias_float * weight_scaling_factor)
 				//at the end, this simplifies to input_scaling_factor * bias_float * weight_scaling_factor
 				//this funny business was not done in the accumulator, as the input to the acucmulator is not scaled by the input scaling factor
-				int bias_int = (int)(biases_from_file[neuron] * weight_scaling_factor * input_scaling_factor);
+				int bias_int = (int)std::round(biases_from_file[neuron] * weight_scaling_factor * input_scaling_factor);
+				
 				biases[neuron] = (int16_t)bias_int;
 			}
 		}
@@ -57,6 +60,7 @@ namespace NN
 				int sum=0;
 				for (int input_pack = 0; input_pack < in_neurons / int8_pack_size; input_pack++)
 				{
+
 					//we first load the 8 bit integers into memory, it's the inputs
 					__m128i ReLU_8_bit_integers = _mm_loadu_si128((__m128i*) (&input[(input_pack) * (int8_pack_size)]));
 
@@ -83,8 +87,10 @@ namespace NN
 					//elementwise multiplication of inputs and their respective weights
 					__m128i result = _mm_mullo_epi16(first_16bit_pack, first_16bit_weight_pack);
 					//store the result 
+
 					int16_t temp[16];
 					_mm_store_si128((__m128i*) temp, result);
+					
 					
 					//redo the multiplication for second pack
 					result = _mm_mullo_epi16(second_16bit_pack, second_16bit_weight_pack);
