@@ -231,7 +231,7 @@ void generate_book()
             if (positions.find(key) == std::end(positions))
             {
                 int score;
-                search::search_move(pos, 3, false, score, s);
+                search::search_move(pos, 1, false, score, s);
                 if (std::abs(score) < 100)
                 {
                     positions[key] = true;
@@ -251,8 +251,8 @@ void generate_book()
     book_file.write((char*)book, sizeof(book));
     book_file.close();
 }
-
-void check_configs()
+#include "Evaluate.h"
+void check_configs(int max_ply = 100)
 {
     int configs[256];
     int bits[6];
@@ -274,13 +274,22 @@ void check_configs()
                     bits[i]++;
                 }
             }
-            if (b.get_side_to_move() == COLOR_BLACK)
+            if (rng::rng()%11 < 8 || (b.get_ply() > 323))
             {
-                b.do_random_move(false);
+                int score;
+                search::SearchInfo s;
+                s.eval_function = evaluate;
+                int move = search::search_move(b, 4, false, score, s);
+                b.do_move(move);
             }
             else
             {
                 b.do_random_move(false);
+            }
+            
+            if (b.get_ply() >= max_ply)
+            {
+                break;
             }
         }
         b.new_game();
@@ -288,12 +297,18 @@ void check_configs()
     }
     for (int i = 0; i < 256; i++)
     {
+        if (!(i % 64))
+        {
+            std::cout << "\n";
+        }
         std::cout << configs[i] << "\n";
     }
+    std::cout << "\n";
     for (int bit = 0; bit < 6; bit++)
     {
         std::cout << bits[bit] << "\n";
     }
+    std::cout << "\n";
 }
 
 int main()
@@ -302,6 +317,17 @@ int main()
     NN::be.test();
     //std::cout << (-127 >> 1);
 
+
+    for (const auto square : { 0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27 })
+    {
+        int square_corrected = square ^ 63;
+        std::cout << "square " << square << " has symmetries :";
+        for (int symmetry = 0; symmetry < SYMMETRY_NONE; symmetry++)
+        {
+            std::cout << board_indices_vertical_mirror[symmetry][square_corrected] << " ";
+        }
+        std::cout << "\n";
+    }
 
     int wins = 0;
     int draws = 0;
@@ -318,13 +344,22 @@ int main()
 
 	auto start = high_resolution_clock::now();
 	Board b;
-	search::SearchInfo s;
-	s.eval_function = evaluate;
+	search::SearchInfo nnue_search_info;
+    nnue_search_info.eval_function = evaluate;
+    nnue_search_info.time = 10000;
+
+    search::SearchInfo classical_search_info;
+    classical_search_info.eval_function = evaluate_classical;
+    classical_search_info.time = 10000;
+
 	for (int i = 0; i < 1000; i++)
     {
-       if (!(i % 100))
+       nnue_search_info.time = 1000000;
+       classical_search_info.time = 2000000;
+       if (!(i % 10))
        {
            std::cout << i << "\n";
+           std::cout << wins << "/" << draws << "/" << loses << "\n\n";
            auto stop = high_resolution_clock::now();
            auto duration = duration_cast<microseconds>(stop - start);
            std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";
@@ -332,71 +367,35 @@ int main()
        std::vector<scored_move> m;
        while (!b.is_over())
        {
-           //if (b.get_side_to_move() == COLOR_WHITE)
-           //{
-           //    if(b.get_ply()<8)
-           //     b.do_random_move();
-           //    else
-           //    {
-           //        int score;
-           //        search::transposition_table.clear();
-           //        int move = search::search_move(b, 3, false, score, s);
-
-           //        //std::cout << "\n\n";
-           //        b.do_move(move);
-           //    }
-           //}
-           //else
-           //{
-           //    int score;
-           //   // std::cout <<"\n" <<  NN::be.Evaluate(b) << "\n";
-           //    //if ((b.get_ply() == 0 && (i==1)))
-           //    {
-           //        //search::search_move(b, 15, true, score, s);
-           //    }
-           //    int move = search::search_move(b, 7, false, score, s);
-           //    
-           //    //std::cout << "\n\n";
-           //    b.do_move(move);
-           //}
-           /*if (false && (b.get_ply() < 10 && rng::rng()%2) || (b.get_ply() > 10 && !(rng::rng() % 10)))
-           {
-               b.do_random_move();
-           }
-           else
-           {
-               int score = 0;
-               int move = search::search_move(b, 1, false, score, s);
-               vals[b.get_ply()][move].first++;
-               configs_moves[b.get_playfield_config()][move].first++;
-               const auto moves = b.get_moves();
-               for (int move = 0; move < b.get_num_moves(); move++)
-               {
-                   vals[b.get_ply()][moves[move]].second++;
-                   configs_moves[b.get_playfield_config()][moves[move]].second++;
-               }
-               b.do_move(move);
-           }*/
            int x;
            int score;
            scored_move curr_scored_move;
            if (b.get_side_to_move() == COLOR_WHITE)
            {
-               if (false)// && (b.get_ply() < 0) || (rng::rng()%10))
-               {
-                   search::transposition_table.clear();
-                   int move = search::search_move(b, 4, false, score, s);
-                   b.do_move(move);
-               }
-               if (true)
+               if (b.get_ply() <= 9)
                {
                    b.do_random_move();
                }
+               else if (b.get_ply() > -9)// && (b.get_ply() < 0) || (rng::rng()%10))
+               {
+                   search::transposition_table.clear();
+                   int move = search::search_move(b, 666, false, score, classical_search_info);
+                   b.do_move(move);
+               }
+        
            }
            else
            {
-               int move = search::search_move(b, 1, false, score, s);
-               b.do_move(move);
+               if (b.get_ply() <= 9)
+               {
+                   b.do_random_move();
+               }
+               else if (b.get_ply() > -9)// && (b.get_ply() < 0) || (rng::rng()%10))
+               {
+                   search::transposition_table.clear();
+                   int move = search::search_move(b, 666, false, score, nnue_search_info);
+                   b.do_move(move);
+               }
            }
        }
        int result = 0;
@@ -426,9 +425,9 @@ int main()
 
     GameGenerator gg;
 	std::cout << wins << "/" << draws << "/" << loses << "\n\n";
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
-        auto games = gg.generate_games(false, true, 3, 4);
+        auto games = gg.generate_games(false, true, 1, 2);
         auto filename = gg.save_to_file(games);
         gg.convert_to_input_type(filename);
     }

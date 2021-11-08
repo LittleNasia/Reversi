@@ -12,3 +12,4 @@ constexpr unsigned long long C_squares = (1ULL << 62) | (1ULL << 55) | (1ULL << 
 
 
 const int evaluate(Board& b);
+const int evaluate_classical (Board& b);

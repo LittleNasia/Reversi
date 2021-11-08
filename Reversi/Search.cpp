@@ -97,7 +97,17 @@ namespace search
 	template<bool root = false>
 	int search(Board& b, int depth, int alpha, int beta, SearchInfo& s, bool doNull = true)
 	{
-
+		if ((!(nodes % 1000)))
+		{
+			auto stop = high_resolution_clock::now();
+			auto duration = duration_cast<microseconds>(stop - s.search_start).count();
+			if ((s.time / 5) - duration < 0)
+			{
+				std::cout << s.time << " " << duration << "\n";
+				s.interrupted = true;
+				return 0;
+			}
+		}
 		if (b.is_over())
 		{
 			nodes++;
@@ -141,7 +151,7 @@ namespace search
 			}
 		}
 		eval = s.eval_function(b);
-		s.eval_stack[depth] = eval;
+		//s.eval_stack[depth] = eval;
 		const bool improving = root ? false : -s.eval_stack[depth + 1] < (eval - 60);
 		
 		//reverse futility pruning
@@ -209,6 +219,10 @@ namespace search
 		//iterate over moves 
 		while (true)
 		{
+			if (s.interrupted)
+			{
+				return 0;
+			}
 			s.ply++;
 			const auto current_move = mp.get_move();
 			if (mp.get_move_count() && (current_move == Board::passing_index))
@@ -292,7 +306,6 @@ namespace search
 
 		while (true)
 		{
-			s.reset();
 			search<Root>(b, depth, alpha, beta, s);
 			int curr_score;
 			unsigned long long key = hash(b);
@@ -329,27 +342,37 @@ namespace search
 		{
 			return 64;
 		}
+		//always use 20% of the remaining time for move
+		const int time_for_move = s.time / 7;
 		auto start_iterative = high_resolution_clock::now();
 		//iterative deepening
 		s.ply = 0;
-		int curr_score = 0;
+		int best_move = 0;
+		int best_score = 0;
 		for (int d = 1; d <= depth; d++)
 		{
-			//
 			auto start = high_resolution_clock::now();
-			aspiration_window(b, d, curr_score, s);
+			s.search_start = start;
+			aspiration_window(b, d, best_score, s);
 			auto stop = high_resolution_clock::now();
+			
+			//duration for current ply
 			auto duration = duration_cast<microseconds>(stop - start);
-
+			if (s.interrupted)
+			{
+				break;
+			}
+			//print information about search
 			unsigned long long key = hash(b);
 			bool found;
 			const auto& entry = transposition_table.get(key, found);
 			int score = entry.score;
-			curr_score = score;
+			best_move = entry.move;
+			best_score = score;
 			if (print)
 				std::cout << "depth: " << d << " moves : ";
 			int num_moves = 0;
-
+			//get moves from TT, make sure move is legal as well
 			while (true)
 			{
 				unsigned long long key = hash(b);
@@ -381,9 +404,20 @@ namespace search
 			if (print)
 				std::cout << " nodes: " << nodes << "  nodes per second: " << (int)((float)nodes / (((float)duration.count() + 1) / 1000000)) << "  score: " << score << "  time elapsed: "
 				<< ((float)search_duration_so_far.count() + 1) / 1000000 << "\n";;
-			nodes = 0;
-		}
 
+			//determine whether we can search one more ply deep
+			const int time_taken = search_duration_so_far.count();
+			//assume that each new search will take up to 4 times more time
+			const int time_predicted = time_taken * 8.5;
+			//check if we still have time to search again
+			if ((time_for_move - (time_predicted)) <= 0 || s.interrupted)
+			{
+				s.time -= time_taken;
+				break;
+			}
+			nodes = 0;
+			
+		}
 
 		unsigned long long key = hash(b);
 		int best_move_index = 64;
@@ -396,13 +430,13 @@ namespace search
 		}
 		//this should never happen, root pos will always be added last to the TT, and it will always have the highest priority
 		//its depth is simply the highest possible and the same keys gets overwritten even with lower depth
-		else
+		else if (!s.interrupted)
 		{
 			std::cout << "root pos not found in tt\n";
 			std::cout << "key is " << key << "\n";
 			std::cout << "entry key is " << entry.posKey << "\n";
 		}
-
+		s.interrupted = false;
 		//std::cout << "\nmove is " << (int)b.get_moves()[m] << " with index " << m << "\n";
 		//std::cout << "\nscore is " << entry.score << "\n";
 		//transposition_table.clear();

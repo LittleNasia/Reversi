@@ -66,11 +66,12 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 				int random_choice = rng::rng() % 1000;
 
 				//do we have a book move? if we do, try to make that move
-				if ((ply < 10) && (curr_book[ply] != -1))
+				if (use_book && ((ply < max_book_length) && (curr_book[ply] != -1)))
 				{
-					b.do_move(curr_book[ply]);
+					curr_move.move = curr_book[ply];
+					b.do_move(curr_move.move);
 				}
-				//first move of the game is always random, but it doesn't count towards the counter
+				//we're not in a book, first move of the game is always random, but it doesn't count towards the counter
 				else if (b.get_ply() == 0)
 				{
 					curr_move.move = b.do_random_move();
@@ -216,6 +217,7 @@ void GameGenerator::convert_to_input_type(const std::string& filename)
 				//save all symmetries
 				for (int symmetry = SYMMETRY_ORIGINAL; symmetry < SYMMETRY_NONE; symmetry++)
 				{
+					
 					game_file_with_inputs.write((char*)&ret_val.transformed_bitboards[symmetry][0], sizeof(bitboard));
 					game_file_with_inputs.write((char*)&ret_val.transformed_bitboards[symmetry][1], sizeof(bitboard));
 					//save the score
