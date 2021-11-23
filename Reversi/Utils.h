@@ -33,6 +33,7 @@ enum Direction
 	DIRECTION_NONE
 };
 
+
 inline constexpr Point directions[DIRECTION_NONE] =
 {
 	{-1,-1},
@@ -44,6 +45,7 @@ inline constexpr Point directions[DIRECTION_NONE] =
 	{1,-1},
 	{0,-1}
 };
+
 
 //for each square on the board, keeps track how many iterations per loop for each direction are to be done
 inline constexpr int capture_iteration_count[64][DIRECTION_NONE] =
@@ -116,6 +118,8 @@ inline constexpr int capture_iteration_count[64][DIRECTION_NONE] =
 
 
 
+
+
 namespace rng
 {
 	//use x as the seed for the rng
@@ -144,10 +148,9 @@ namespace rng
 
 		return z;
 	}
-
-
-
 }
+
+
 
 
 namespace NN

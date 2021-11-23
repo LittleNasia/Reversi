@@ -188,7 +188,8 @@ void GameGenerator::convert_to_input_type(const std::string& filename)
 
 	std::ofstream game_file_with_inputs(filename + "." + (scored ? "sinput" : "nsinput"), std::ios::binary);
 	Board b;
-	PositionPicker pp;
+	PositionPicker* pp_ptr = new PositionPicker;
+	PositionPicker& pp = *pp_ptr;
 	for (int move = 0; move < length; move++)
 	{
 		int8_t current_move = buff[move];
@@ -256,5 +257,6 @@ void GameGenerator::convert_to_input_type(const std::string& filename)
 			}
 		}
 	}
+	delete pp_ptr;
 	game_file_with_inputs.close();
 }

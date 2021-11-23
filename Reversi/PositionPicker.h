@@ -118,7 +118,7 @@ struct pos_entry
 class PositionPicker
 {
 public:
-	static constexpr int size = 10000;
+	static constexpr int size = 10000000;
 	bool enter_and_get_position(const bitboard side_to_move_bb, const bitboard opposite_side_bb, pos_entry& ret_val);
 	const pos_entry* get_data() const { return _positions; }
 

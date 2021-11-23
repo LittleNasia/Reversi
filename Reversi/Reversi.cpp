@@ -8,6 +8,7 @@
 #include "GameGenerator.h"
 #include "BoardEvaluator.h"
 #include "PositionPicker.h"
+#include "cmd.h"
 
 #include <unordered_set>
 #include <algorithm>
@@ -311,10 +312,115 @@ void check_configs(int max_ply = 100)
     std::cout << "\n";
 }
 
+int xd = 0;
+
+void speed_test()
+{
+    for (int game = 0; game < 25000; game++)
+    {
+        Board pos;
+        while (!pos.is_over())
+        {
+            pos.do_random_move();
+            xd += NN::be.Evaluate(pos);
+        }
+        pos.new_game();
+    }
+
+}
+
+
+#include "MovePicker.h"
+void tune_move_ordering()
+{
+    std::pair<int,int> vals[100][65];
+    std::pair<int, int> configs_moves[256][65];
+    std::memset(vals, 0, sizeof(vals));
+    std::memset(configs_moves, 0, sizeof(configs_moves));
+    Board b;
+    
+    std::unordered_map<int, win_pct> scores;
+    auto start = high_resolution_clock::now();
+    search::SearchInfo s;
+    s.eval_function = evaluate;
+    s.time = search::max_time;
+    for (int i = 0; i < 30000; i++)
+    {
+        if (!(i % 100))
+        {
+            std::cout << i << "\n";
+            auto stop = high_resolution_clock::now();
+            auto duration = duration_cast<microseconds>(stop - start);
+            std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";
+        }
+        while (!b.is_over())
+        {
+            int x;
+            int score;
+            
+            
+            auto move = search::search_move(b, 6, false, score, s);
+            const auto config = b.get_playfield_config();
+
+
+            vals[b.get_ply()][move].first++;
+            configs_moves[config][move].first++;
+
+            MovePicker mp(b);
+
+            while (mp.get_move_count())
+            {
+                const auto current_move = mp.get_move();
+                vals[b.get_ply()][move].second++;
+                configs_moves[config][move].second++;
+
+                if (mp.get_move_count() && (current_move == Board::passing_index))
+                {
+                    break;
+                }
+            }
+            b.do_random_move();
+        }
+        b.new_game();
+    }
+    std::cout << "constexpr float ply_move_probability[85][65] = {\n";
+    for (int ply = 0; ply < 85; ply++)
+    {
+        std::cout << "{";
+        for (int move = 0; move < 65; move++)
+        {
+            float result = vals[ply][move].second != 0 ? (float)vals[ply][move].first / vals[ply][move].second : 0;
+            std::cout << result <<  ", ";
+        }
+        std::cout << "},\n";
+    }
+    std::cout << "}\n\n\nconstexpr float config_move_probability[256][65] = {";
+    for (int ply = 0; ply < 256; ply++)
+    {
+        std::cout << "{";
+        for (int move = 0; move < 65; move++)
+        {
+            float result = configs_moves[ply][move].second != 0 ? (float)configs_moves[ply][move].first / configs_moves[ply][move].second : 0;
+            std::cout << result << ", ";
+        }
+        std::cout << "},\n";
+    }
+    
+}
+
+
+
+
 int main()
 {
     search::init();
-    NN::be.test();
+    GameGenerator gg;
+    gg.convert_to_input_type("games0.sbin");
+    //gg.convert_to_input_type("games1.sbin");
+    //NN::be.test();
+    //check_configs();
+    //tune_move_ordering();
+    cmd::loop();
     //std::cout << (-127 >> 1);
 
 
@@ -352,10 +458,16 @@ int main()
     classical_search_info.eval_function = evaluate_classical;
     classical_search_info.time = 10000;
 
-	for (int i = 0; i < 1000; i++)
+    speed_test();
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";
+    std::cout << xd << "\n";
+
+	for (int i = 0; i < 0; i++)
     {
-       nnue_search_info.time = 1000000;
-       classical_search_info.time = 2000000;
+       nnue_search_info.time = 100000;
+       classical_search_info.time = 200000;
        if (!(i % 10))
        {
            std::cout << i << "\n";
@@ -423,13 +535,13 @@ int main()
 
 
 
-    GameGenerator gg;
+    
 	std::cout << wins << "/" << draws << "/" << loses << "\n\n";
     for (int i = 0; i < 1; i++)
     {
         auto games = gg.generate_games(false, true, 1, 2);
         auto filename = gg.save_to_file(games);
-        gg.convert_to_input_type(filename);
+        //gg.convert_to_input_type(filename);
     }
 
 }   
@@ -442,144 +554,7 @@ int main()
     //search::SearchInfo s;
     //s.eval_function = evaluate;
     //
-    //std::pair<int,int> vals[100][65];
-    //std::pair<int, int> configs_moves[256][65];
-    //std::memset(vals, 0, sizeof(vals));
-    //std::memset(configs_moves, 0, sizeof(configs_moves));
-    //
-    //std::unordered_map<int, win_pct> scores;
-    //auto start = high_resolution_clock::now();
-    //for (int i = 0; i < 1000; i++)
-    //{
-    //    if (!(i % 100))
-    //    {
-    //        std::cout << i << "\n";
-    //        auto stop = high_resolution_clock::now();
-    //        auto duration = duration_cast<microseconds>(stop - start);
-    //        std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";
-    //    }
-    //    std::vector<scored_move> m;
-    //    while (!b.is_over())
-    //    {
-    //        //if (b.get_side_to_move() == COLOR_WHITE)
-    //        //{
-    //        //    if(b.get_ply()<8)
-    //        //     b.do_random_move();
-    //        //    else
-    //        //    {
-    //        //        int score;
-    //        //        search::transposition_table.clear();
-    //        //        int move = search::search_move(b, 3, false, score, s);
-
-    //        //        //std::cout << "\n\n";
-    //        //        b.do_move(move);
-    //        //    }
-    //        //}
-    //        //else
-    //        //{
-    //        //    int score;
-    //        //   // std::cout <<"\n" <<  NN::be.Evaluate(b) << "\n";
-    //        //    //if ((b.get_ply() == 0 && (i==1)))
-    //        //    {
-    //        //        //search::search_move(b, 15, true, score, s);
-    //        //    }
-    //        //    int move = search::search_move(b, 7, false, score, s);
-    //        //    
-    //        //    //std::cout << "\n\n";
-    //        //    b.do_move(move);
-    //        //}
-    //        /*if (false && (b.get_ply() < 10 && rng::rng()%2) || (b.get_ply() > 10 && !(rng::rng() % 10)))
-    //        {
-    //            b.do_random_move();
-    //        }
-    //        else
-    //        {
-    //            int score = 0;
-    //            int move = search::search_move(b, 1, false, score, s);
-    //            vals[b.get_ply()][move].first++;
-    //            configs_moves[b.get_playfield_config()][move].first++;
-    //            const auto moves = b.get_moves();
-    //            for (int move = 0; move < b.get_num_moves(); move++)
-    //            {
-    //                vals[b.get_ply()][moves[move]].second++;
-    //                configs_moves[b.get_playfield_config()][moves[move]].second++;
-    //            }
-    //            b.do_move(move);
-    //        }*/
-    //        int x;
-    //        int score;
-    //        scored_move curr_scored_move;
-    //        if (b.get_side_to_move() == COLOR_WHITE)
-    //        {
-    //            if (false)// && (b.get_ply() < 0) || (rng::rng()%10))
-    //            {
-    //                search::transposition_table.clear();
-    //                int move = search::search_move(b, 4, false, score, s);
-    //                b.do_move(move);
-    //            }
-    //            if (true)
-    //            {
-    //                b.do_random_move();
-    //            }
-    //        }
-    //        else
-    //        {
-    //            int move = search::search_move(b, 1, false, score, s);
-    //            b.do_move(move);
-    //        }
-    //    }
-    //    int result = 0;
-    //    if (b.get_score() < 0)
-    //    {
-    //        wins += 1;
-    //        result = -1;
-    //    }
-    //    else if (b.get_score() > 0)
-    //    {
-    //        loses += 1;
-    //        result = 1;
-    //    }
-    //    else
-    //    {
-    //        draws += 1;
-    //        result = 0;
-    //    }
-    //    for (const auto& val : m)
-    //    {
-    //        if (scores.find(val.score) != std::end(scores))
-    //        {
-    //            scores[val.score].score += result;
-    //            scores[val.score].wins += 1;
-    //        }
-    //        else
-    //        {
-    //            scores[val.score] = { result,1 };
-    //        }
-    //    }
-    //    b.new_game();
-    //}
-    ///*std::cout << "constexpr float ply_move_probability[85][65] = {\n";
-    //for (int ply = 0; ply < 85; ply++)
-    //{
-    //    std::cout << "{";
-    //    for (int move = 0; move < 65; move++)
-    //    {
-    //        float result = vals[ply][move].second != 0 ? (float)vals[ply][move].first / vals[ply][move].second : 0;
-    //        std::cout << result <<  ", ";
-    //    }
-    //    std::cout << "},\n";
-    //}
-    //std::cout << "}\n\n\nconstexpr float config_move_probability[256][65] = {";
-    //for (int ply = 0; ply < 256; ply++)
-    //{
-    //    std::cout << "{";
-    //    for (int move = 0; move < 65; move++)
-    //    {
-    //        float result = configs_moves[ply][move].second != 0 ? (float)configs_moves[ply][move].first / configs_moves[ply][move].second : 0;
-    //        std::cout << result << ", ";
-    //    }
-    //    std::cout << "},\n";
-    //}
+    
     //std::cout << "}\n";*/
     //std::cout << wins << "/" << draws << "/" << loses << "\n\n";
     //auto stop = high_resolution_clock::now();

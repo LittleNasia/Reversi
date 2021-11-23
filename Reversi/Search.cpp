@@ -101,7 +101,7 @@ namespace search
 		{
 			auto stop = high_resolution_clock::now();
 			auto duration = duration_cast<microseconds>(stop - s.search_start).count();
-			if ((s.time / 5) - duration < 0)
+			if ((s.time) - duration < 0)
 			{
 				std::cout << s.time << " " << duration << "\n";
 				s.interrupted = true;
@@ -152,7 +152,7 @@ namespace search
 		}
 		eval = s.eval_function(b);
 		//s.eval_stack[depth] = eval;
-		const bool improving = root ? false : -s.eval_stack[depth + 1] < (eval - 60);
+		//const bool improving = root ? false : -s.eval_stack[depth + 1] < (eval - 60);
 		
 		//reverse futility pruning
 		//speeds up the search but doesn't impact the result in any meaningful way
@@ -245,7 +245,7 @@ namespace search
 			{
 				//late move reductions
 				int reduction = 1;
-				if ((depth > 4) && (played > mp.get_move_count() * 5/7) && (improving))
+				if ((depth > 4) && (played > mp.get_move_count() * 5/7))
 				{
 					//reduction += 1;
 				}
@@ -342,8 +342,11 @@ namespace search
 		{
 			return 64;
 		}
+		const bool using_time = s.time != max_time;
 		//always use 20% of the remaining time for move
-		const int time_for_move = s.time / 7;
+		const int64_t time_for_move = ((using_time)? s.time * time_per_move_percentage / 100 : max_time);
+		s.time = time_for_move;
+		//std::cout << (float) time_for_move / 1000000 << "\n";
 		auto start_iterative = high_resolution_clock::now();
 		//iterative deepening
 		s.ply = 0;
@@ -403,18 +406,22 @@ namespace search
 			auto search_duration_so_far = duration_cast<microseconds>(now - start_iterative);
 			if (print)
 				std::cout << " nodes: " << nodes << "  nodes per second: " << (int)((float)nodes / (((float)duration.count() + 1) / 1000000)) << "  score: " << score << "  time elapsed: "
-				<< ((float)search_duration_so_far.count() + 1) / 1000000 << "\n";;
+				<< ((float)search_duration_so_far.count() + 1) / 1000000 << std::endl;;
 
-			//determine whether we can search one more ply deep
-			const int time_taken = search_duration_so_far.count();
-			//assume that each new search will take up to 4 times more time
-			const int time_predicted = time_taken * 8.5;
-			//check if we still have time to search again
-			if ((time_for_move - (time_predicted)) <= 0 || s.interrupted)
+			if (using_time)
 			{
-				s.time -= time_taken;
-				break;
+				//determine whether we can search one more ply deep
+				const int64_t time_taken = search_duration_so_far.count();
+				//assume that each new search will take up to 4 times more time
+				const int64_t time_predicted = time_taken * depth_time_increase_multiplier;
+				//check if we still have time to search again
+				if ((time_for_move - (time_predicted)) <= 0 || s.interrupted)
+				{
+					s.time -= time_taken;
+					break;
+				}
 			}
+			
 			nodes = 0;
 			
 		}

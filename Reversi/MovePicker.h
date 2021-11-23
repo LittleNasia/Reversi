@@ -13,6 +13,7 @@ class MovePicker
 {
 public:
 	MovePicker(Board& b, const TT_entry& entry, const bool found_tt_entry, const search::SearchInfo& s);
+	MovePicker(Board& b);
 
 	uint16_t get_move();
 

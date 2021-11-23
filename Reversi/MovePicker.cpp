@@ -36,6 +36,17 @@ MovePicker::MovePicker(Board& b, const TT_entry& entry, const bool found_tt_entr
 	std::sort(std::begin(weighted_moves), std::begin(weighted_moves) + move_count, ordering_function);
 }
 
+MovePicker::MovePicker(Board& b)
+{
+	const auto moves = b.get_moves();
+	move_count = b.get_num_moves();
+
+	for (int move = 0; move < move_count; move++)
+	{
+		weighted_moves[move].move = moves[move];
+	}
+}
+
 uint16_t MovePicker::get_move()
 {
 	if (current_move >= move_count)

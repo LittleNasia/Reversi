@@ -55,7 +55,7 @@ const int evaluate(Board& b)
 		constexpr int tempo = 14;
 		//side to move perspective
 		float x = ((black_moves - white_moves + corner_score) * ((b.get_side_to_move() == COLOR_BLACK) ? 7 : -7)) + tempo;
-		return std::tanh((x - 5) / 125) * 20;
+		return std::tanh((x - 5) / 125) * 99;
 	}
 }
 
