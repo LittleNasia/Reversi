@@ -1,6 +1,6 @@
 #pragma once
-#include "Board.h"
-#include "BoardEvaluator.h"
+#include "board.h"
+#include "board_evaluator.h"
 
 constexpr unsigned long long center_16_bitmask = 66229406269440ULL;
 constexpr unsigned long long center_4_bitmask = 103481868288ULL;
@@ -11,5 +11,5 @@ constexpr unsigned long long C_squares = (1ULL << 62) | (1ULL << 55) | (1ULL << 
 
 
 
-const int evaluate(Board& b);
-const int evaluate_classical (Board& b);
+const int evaluate(board& b);
+const int evaluate_classical (board& b);

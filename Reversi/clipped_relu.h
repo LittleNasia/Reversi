@@ -1,5 +1,5 @@
 #pragma once
-#include "NN_accumulator.h"
+#include "nnue_accumulator.h"
 #include <smmintrin.h>
 #include <emmintrin.h>
 
@@ -7,7 +7,7 @@
 namespace NN
 { 
 	template <int size, bool do_zero_max>
-	struct ClippedReLU
+	struct clipped_relu
 	{
 		int8_t output[size];
 
@@ -31,7 +31,7 @@ namespace NN
 				__m128i accumulator_data_first = _mm_loadu_si128(( __m128i*) (&acc[(pack*2) * (int16_pack_size)]));
 				const __m128i accumulator_data_second = _mm_loadu_si128(( __m128i*) (&acc[((pack * 2) + 1) * (int16_pack_size)]));
 				//we convert and move the 16 bit values to 8 bit 
-				//it does saturate the 8 bit integers, however we also want to apply ReLU on them later 
+				//it does saturate the 8 bit integers (effectively clipping them to 255 -> we want that), however we also want to apply ReLU on them later 
 				accumulator_data_first  = _mm_packs_epi16(accumulator_data_first, accumulator_data_second);
 
 				if (do_zero_max)

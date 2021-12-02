@@ -1,7 +1,7 @@
-#include "BoardEvaluator.h"
+#include "board_evaluator.h"
 #include <fstream>
 
-NN::BoardEvaluator::BoardEvaluator()
+NN::board_evaluator::board_evaluator()
 {
 	std::ifstream input("C:/Users/Anastazja/reversi.nnue", std::ios::binary);
 	float accumulator_weights[layer_sizes[0]][layer_sizes[1]];
@@ -22,20 +22,20 @@ NN::BoardEvaluator::BoardEvaluator()
 	input.read((char*)layer_3_biases, sizeof(layer_3_biases));
 
 
-	NN_accumulator::read_weights((float*)accumulator_weights, (float*)accumulator_biases);
+	nnue_accumulator::read_weights((float*)accumulator_weights, (float*)accumulator_biases);
 	layer_2.read_weights((float*)layer_1_weights, (float*)layer_1_biases);
 	layer_3.read_weights((float*)layer_2_weights, (float*)layer_2_biases);
 	layer_output.read_weights((float*)layer_3_weights, (float*)layer_3_biases);
 }
 
-void NN::BoardEvaluator::test()
+void NN::board_evaluator::test()
 {
 	int16_t input[layer_sizes[0]];
 	for (auto& val : input)
 	{
 		val = 0;
 	}
-	NN_accumulator acc;
+	nnue_accumulator acc;
 	acc.recompute_acc(input);
 	//simple forward pass
 	ReLU_layer_1.forward(acc.output[COLOR_WHITE]);
@@ -124,7 +124,7 @@ void NN::BoardEvaluator::test()
 	std::cout << "\n\nones " << (float)layer_output.output[0]/127 << "\n";
 }
 
-int NN::BoardEvaluator::Evaluate(const Board& b)
+int NN::board_evaluator::evaluate(const board& b)
 {
 	//we get the input present in the current accumulator from the board 
 	const int16_t* input = b.get_current_accumulator_output();

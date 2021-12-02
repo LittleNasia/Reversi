@@ -19,33 +19,35 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BitUtilities.h" />
-    <ClInclude Include="Board.h" />
-    <ClInclude Include="BoardEvaluator.h" />
-    <ClInclude Include="ClippedReLU.h" />
+    <ClInclude Include="bit_utilities.h" />
+    <ClInclude Include="board.h" />
+    <ClInclude Include="board_evaluator.h" />
+    <ClInclude Include="clipped_relu.h" />
     <ClInclude Include="cmd.h" />
-    <ClInclude Include="Evaluate.h" />
-    <ClInclude Include="GameGenerator.h" />
-    <ClInclude Include="LinearLayer.h" />
-    <ClInclude Include="MovePicker.h" />
-    <ClInclude Include="NN_accumulator.h" />
-    <ClInclude Include="PositionPicker.h" />
-    <ClInclude Include="Search.h" />
-    <ClInclude Include="TT.h" />
-    <ClInclude Include="Utils.h" />
+    <ClInclude Include="conv_layer.h" />
+    <ClInclude Include="evaluate.h" />
+    <ClInclude Include="game_generator.h" />
+    <ClInclude Include="linear_layer.h" />
+    <ClInclude Include="matrix.h" />
+    <ClInclude Include="move_picker.h" />
+    <ClInclude Include="nnue_accumulator.h" />
+    <ClInclude Include="position_picker.h" />
+    <ClInclude Include="search.h" />
+    <ClInclude Include="tt.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Board.cpp" />
-    <ClCompile Include="BoardEvaluator.cpp" />
+    <ClCompile Include="board.cpp" />
+    <ClCompile Include="board_evaluator.cpp" />
     <ClCompile Include="cmd.cpp" />
-    <ClCompile Include="Evaluate.cpp" />
-    <ClCompile Include="GameGenerator.cpp" />
-    <ClCompile Include="MovePicker.cpp" />
-    <ClCompile Include="NN_accumulator.cpp" />
-    <ClCompile Include="PositionPicker.cpp" />
-    <ClCompile Include="Reversi.cpp" />
-    <ClCompile Include="Search.cpp" />
-    <ClCompile Include="TT.cpp" />
+    <ClCompile Include="evaluate.cpp" />
+    <ClCompile Include="game_generator.cpp" />
+    <ClCompile Include="move_picker.cpp" />
+    <ClCompile Include="nnue_accumulator.cpp" />
+    <ClCompile Include="position_picker.cpp" />
+    <ClCompile Include="reversi.cpp" />
+    <ClCompile Include="search.cpp" />
+    <ClCompile Include="tt.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -166,7 +168,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>G:\half;G:\eigen-3.3.7;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
@@ -184,7 +186,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StackReserveSize>100000000</StackReserveSize>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalOptions>/USEPROFILE %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

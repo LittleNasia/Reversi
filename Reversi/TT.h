@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-struct TT_entry
+struct tt_entry
 {
 	static constexpr int flag_exact = 0;
 	static constexpr int flag_alpha = 1;
@@ -12,22 +12,22 @@ struct TT_entry
 	int flag;	
 };
 
-struct Bucket
+struct bucket
 {
 	static constexpr int max_elements = 1;
 	int curr_elements = 0;
-	TT_entry elements[max_elements];
+	tt_entry elements[max_elements];
 };
 
 
-class TT
+class tt
 {
 public:
 	constexpr static unsigned int size = 2<<20;
 	void clear();
-	void store(const TT_entry& entry, bool always_replace = false);
-	const TT_entry& get(const TT_entry& entry, bool& found);
-	const TT_entry& get(unsigned long long posKey, bool& found);
+	void store(const tt_entry& entry, bool always_replace = false);
+	const tt_entry& get(const tt_entry& entry, bool& found);
+	const tt_entry& get(unsigned long long posKey, bool& found);
 private:
-	Bucket _TT[size];
+	bucket _tt[size];
 };

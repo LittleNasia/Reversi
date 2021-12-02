@@ -1,16 +1,16 @@
-#include "Board.h"
+#include "board.h"
 #include <iostream>
 #include <functional>
 #include "Search.h"
 
-Board::Board()
+board::board()
 {
 	new_game();
 }
 
 
 
-void Board::print_board()
+void board::print_board()
 {
 	int index = 63;
 	get_moves();
@@ -55,7 +55,7 @@ void Board::print_board()
 	std::cout << "current side to move is " << ((side_to_move == COLOR_BLACK) ? 'X' : 'O') << "\n";
 }
 
-void Board::new_game()
+void board::new_game()
 {
 	side_to_move = COLOR_BLACK;
 	bb.black_bb = 0 | (1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4));
@@ -78,7 +78,7 @@ void Board::new_game()
 	}
 }
 
-const Board::move_type* Board::get_moves()
+const board::move_type* board::get_moves()
 {
 	const auto& own_bb = side_to_move == COLOR_WHITE ? bb.white_bb : bb.black_bb;
 	const auto& enemy_bb = side_to_move == COLOR_WHITE ? bb.black_bb : bb.white_bb;
@@ -164,7 +164,7 @@ const Board::move_type* Board::get_moves()
 }
 
 //only to be called with a move that is legal for sure
-void Board::capture(const uint8_t move, const bool update_accumulator)
+void board::capture(const uint8_t move, const bool update_accumulator)
 {
 	if (move != passing_index)
 	{ 
@@ -252,13 +252,13 @@ void Board::capture(const uint8_t move, const bool update_accumulator)
 	move_history[ply].first_moves = first_moves;
 }
 
-void Board::do_move(const int square, const bool update_accumulator)
+void board::do_move(const int square, const bool update_accumulator)
 {
 	ply++;
 	capture(square, update_accumulator);
 }
 
-const bool Board::do_move_is_legal(const int square, const bool update_accumulator)
+const bool board::do_move_is_legal(const int square, const bool update_accumulator)
 {
 	ply++;
 	get_moves();
@@ -301,7 +301,7 @@ const bool Board::do_move_is_legal(const int square, const bool update_accumulat
 	}
 }
 
-int Board::do_random_move(bool update_accumulator)
+int board::do_random_move(bool update_accumulator)
 {
 	ply++;
 	get_moves();
@@ -320,7 +320,7 @@ int Board::do_random_move(bool update_accumulator)
 	return available_moves[move];
 }	
 
-int Board::do_first_move()
+int board::do_first_move()
 {
 	ply++;
 	get_moves();
@@ -329,7 +329,7 @@ int Board::do_first_move()
 	return available_moves[move];
 }
 
-void Board::undo_move()
+void board::undo_move()
 {
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
 	ply--;
@@ -346,7 +346,7 @@ enum game_phase
 	PHASE_LATE,
 	PHASE_END
 };
-const uint8_t Board::get_playfield_config() const
+const uint8_t board::get_playfield_config() const
 {
 	static constexpr bitboard masks[4][6] =
 	{

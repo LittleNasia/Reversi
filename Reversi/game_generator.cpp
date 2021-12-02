@@ -1,5 +1,5 @@
-#include "GameGenerator.h"
-#include "PositionPicker.h"
+#include "game_generator.h"
+#include "position_picker.h"
 
 
 #include <future>
@@ -8,7 +8,7 @@
 
 
 
-GameGenerator::GameGenerator()
+game_generator::game_generator()
 {
 	std::ifstream book_file("book.bin", std::ios::binary);
 	book_file.read((char*)book, sizeof(book));
@@ -16,10 +16,10 @@ GameGenerator::GameGenerator()
 	reset();
 }
 
-std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_movers, const bool save_scores, const int search_depth)
+std::vector<Game> game_generator::game_generator_worker(const bool use_random_movers, const bool save_scores, const int search_depth)
 {
 	std::vector<Game> games;
-	Board b;
+	board b;
 	for (int game = 0; game < games_per_file; game++)
 	{
 		int curr_book_index = rng::rng() % book_size;
@@ -31,7 +31,7 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 		Game current_game;
 		current_game.moves.reserve(64);
 		//start a game
-		search::SearchInfo s;
+		search::search_info s;
 		s.eval_function = evaluate;
 
 		current_game.scored = !use_random_movers && save_scores;
@@ -60,7 +60,7 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 				//std::cout << score << "\n";
 				if (save_scores)
 				{
-					curr_move.score = score * (lambda) / 100;//NN::be.Evaluate(b);//
+					curr_move.score = score * (lambda) / 100;//NN::be.evaluate(b);//
 					//std::cout << curr_move.score << "\n";
 				}
 				int random_choice = rng::rng() % 1000;
@@ -131,13 +131,13 @@ std::vector<Game> GameGenerator::game_generator_worker(const bool use_random_mov
 }
 
 
-std::vector<Game> GameGenerator::generate_games(bool use_random_movers, bool save_scores, int search_depth, int num_threads)
+std::vector<Game> game_generator::generate_games(bool use_random_movers, bool save_scores, int search_depth, int num_threads)
 {
 	std::vector<std::future<std::vector<Game>>> thread_results(num_threads);
 	std::vector<Game> combined_games;
 	for (int current_thread = 0; current_thread < num_threads; current_thread++)
 	{
-		thread_results[current_thread] = std::async(&GameGenerator::game_generator_worker,this, use_random_movers, save_scores, search_depth);
+		thread_results[current_thread] = std::async(&game_generator::game_generator_worker,this, use_random_movers, save_scores, search_depth);
 	}
 
 	for (int current_thread = 0; current_thread < num_threads; current_thread++)
@@ -148,7 +148,7 @@ std::vector<Game> GameGenerator::generate_games(bool use_random_movers, bool sav
 	return combined_games;
 }
 
-std::string GameGenerator::save_to_file(const std::vector<Game>& games)
+std::string game_generator::save_to_file(const std::vector<Game>& games)
 {
 	bool scored = games[0].scored;
 	std::string filename = "games" + std::to_string(current_file_index++) + (scored ? ".sbin" : ".nsbin");
@@ -156,7 +156,7 @@ std::string GameGenerator::save_to_file(const std::vector<Game>& games)
 
 	for (const auto& game : games)
 	{
-		int8_t previous_move = Board::passing_index;
+		int8_t previous_move = board::passing_index;
 		for (const auto& move : game.moves)
 		{
 			game_file.write((char*)&move.move, sizeof(move.move));
@@ -171,7 +171,7 @@ std::string GameGenerator::save_to_file(const std::vector<Game>& games)
 }
 
 
-void GameGenerator::convert_to_input_type(const std::string& filename)
+void game_generator::convert_to_input_type(const std::string& filename)
 {
 	std::ifstream game_file(filename, std::ios::binary);
 	bool scored = filename.find(".nsbin") == std::string::npos;
@@ -187,9 +187,9 @@ void GameGenerator::convert_to_input_type(const std::string& filename)
 	game_file.close();
 
 	std::ofstream game_file_with_inputs(filename + "." + (scored ? "sinput" : "nsinput"), std::ios::binary);
-	Board b;
-	PositionPicker* pp_ptr = new PositionPicker;
-	PositionPicker& pp = *pp_ptr;
+	board b;
+	position_picker* pp_ptr = new position_picker;
+	position_picker& pp = *pp_ptr;
 	for (int move = 0; move < length; move++)
 	{
 		int8_t current_move = buff[move];
@@ -239,7 +239,7 @@ void GameGenerator::convert_to_input_type(const std::string& filename)
 	}
 	
 	const auto& data = pp.get_data();
-	for (int i = 0; i < PositionPicker::size; i++)
+	for (int i = 0; i < position_picker::size; i++)
 	{
 		const pos_entry& ret_val = data[i];
 		if (ret_val.valid)

@@ -1,23 +1,25 @@
 #include <iostream>
-#include "Board.h"
+#include "board.h"
 #include <chrono>
 #include <cstring>
 #include "Search.h"
-#include "ClippedReLU.h"
-#include "LinearLayer.h"
-#include "GameGenerator.h"
-#include "BoardEvaluator.h"
-#include "PositionPicker.h"
+#include "clipped_relu.h"
+#include "linear_layer.h"
+#include "game_generator.h"
+#include "board_evaluator.h"
+#include "position_picker.h"
 #include "cmd.h"
+#include "conv_layer.h"
 
 #include <unordered_set>
 #include <algorithm>
 #include <random>
+#include <iomanip>
 using namespace std::chrono;
 
 unsigned long long perft = 0;
 
-void pf(Board& pos, int depth)
+void pf(board& pos, int depth)
 {
     if (depth == 0 || pos.is_over())
     {
@@ -26,11 +28,11 @@ void pf(Board& pos, int depth)
     }
 
     
-    uint8_t moves[Board::rows * Board::cols / 2];
-    std::memcpy(moves, pos.get_moves(), Board::rows * Board::cols / 2);
+    uint8_t moves[board::rows * board::cols / 2];
+    std::memcpy(moves, pos.get_moves(), board::rows * board::cols / 2);
     int num_moves = pos.get_num_moves();
     int current_move = 0;
-    while (moves[current_move] != Board::passing_index)
+    while (moves[current_move] != board::passing_index)
     {
         pos.do_move(moves[current_move++],false);
         pf(pos, depth - 1);
@@ -38,7 +40,7 @@ void pf(Board& pos, int depth)
     }
     if (!num_moves)
     {
-        pos.do_move(Board::passing_index, false);
+        pos.do_move(board::passing_index, false);
         pf(pos, depth - 1);
         pos.undo_move();
     }
@@ -207,12 +209,12 @@ struct win_pct
 
 
 
-constexpr int book_size = GameGenerator::book_size;
-int8_t book[book_size][GameGenerator::max_book_length];
+constexpr int book_size = game_generator::book_size;
+int8_t book[book_size][game_generator::max_book_length];
 void generate_book()
 {
     std::unordered_map<unsigned long long, bool> positions;
-    search::SearchInfo s;
+    search::search_info s;
     s.eval_function = evaluate;
 
     for (int game = 0; game < book_size; game++)
@@ -221,10 +223,10 @@ void generate_book()
         {
             std::cout << game << "\n";
         }
-        Board pos;
-        int8_t curr_game[GameGenerator::max_book_length];
+        board pos;
+        int8_t curr_game[game_generator::max_book_length];
         std::memset(curr_game, -1, sizeof(curr_game));
-        for (int move = 0; move < GameGenerator::max_book_length; move++)
+        for (int move = 0; move < game_generator::max_book_length; move++)
         {
             int curr_move = pos.do_random_move();
             curr_game[move] = curr_move;
@@ -240,7 +242,7 @@ void generate_book()
                     break;
                 }
             }
-            if (move == GameGenerator::max_book_length-1)
+            if (move == game_generator::max_book_length-1)
             {
                 game--;
             }
@@ -252,14 +254,14 @@ void generate_book()
     book_file.write((char*)book, sizeof(book));
     book_file.close();
 }
-#include "Evaluate.h"
+#include "evaluate.h"
 void check_configs(int max_ply = 100)
 {
     int configs[256];
     int bits[6];
     std::memset(configs, 0, sizeof(configs));
     std::memset(bits, 0, sizeof(bits));
-    Board b;
+    board b;
     for (int i = 0; i < 5000; i++)
     {
         while (!b.is_over())
@@ -278,7 +280,7 @@ void check_configs(int max_ply = 100)
             if (rng::rng()%11 < 8 || (b.get_ply() > 323))
             {
                 int score;
-                search::SearchInfo s;
+                search::search_info s;
                 s.eval_function = evaluate;
                 int move = search::search_move(b, 4, false, score, s);
                 b.do_move(move);
@@ -318,11 +320,11 @@ void speed_test()
 {
     for (int game = 0; game < 25000; game++)
     {
-        Board pos;
+        board pos;
         while (!pos.is_over())
         {
             pos.do_random_move();
-            xd += NN::be.Evaluate(pos);
+            xd += NN::be.evaluate(pos);
         }
         pos.new_game();
     }
@@ -330,18 +332,18 @@ void speed_test()
 }
 
 
-#include "MovePicker.h"
+#include "move_picker.h"
 void tune_move_ordering()
 {
     std::pair<int,int> vals[100][65];
     std::pair<int, int> configs_moves[256][65];
     std::memset(vals, 0, sizeof(vals));
     std::memset(configs_moves, 0, sizeof(configs_moves));
-    Board b;
+    board b;
     
     std::unordered_map<int, win_pct> scores;
     auto start = high_resolution_clock::now();
-    search::SearchInfo s;
+    search::search_info s;
     s.eval_function = evaluate;
     s.time = search::max_time;
     for (int i = 0; i < 30000; i++)
@@ -366,7 +368,7 @@ void tune_move_ordering()
             vals[b.get_ply()][move].first++;
             configs_moves[config][move].first++;
 
-            MovePicker mp(b);
+            move_picker mp(b);
 
             while (mp.get_move_count())
             {
@@ -374,7 +376,7 @@ void tune_move_ordering()
                 vals[b.get_ply()][move].second++;
                 configs_moves[config][move].second++;
 
-                if (mp.get_move_count() && (current_move == Board::passing_index))
+                if (mp.get_move_count() && (current_move == board::passing_index))
                 {
                     break;
                 }
@@ -414,8 +416,38 @@ void tune_move_ordering()
 int main()
 {
     search::init();
-    GameGenerator gg;
-    gg.convert_to_input_type("games0.sbin");
+    /*std::string filename;
+    std::cout << "please enter the filename to convert\n";
+    std::cin >> filename;
+    game_generator gg;
+    gg.convert_to_input_type(filename);
+    return 0;*/
+    /*matrix<8, 8> input[5];
+    for (int row = 0; row < 8; row++)
+    {
+        for (int col = 0; col < 8; col++)
+        {
+            for (int channel = 0; channel < 5; channel++) 
+            {
+                input[channel](row, col) = 1.0f;
+            }
+        }
+    }
+    conv_layer<8, 8, 5, 4, 4, 5, 5, 8, 1, 2, 1, 2, false> l;
+    const auto& ret = l.forward(input);
+    for (int output_channel = 0; output_channel < 8; output_channel++)
+    {
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                std::cout << "[" << std::setw(2) <<  ret[output_channel](row, col) << "]";
+            }
+            std::cout << "\n";
+        }
+        std::cout << "\n\n";
+    }
+    return 0;*/
     //gg.convert_to_input_type("games1.sbin");
     //NN::be.test();
     //check_configs();
@@ -449,12 +481,12 @@ int main()
 
 
 	auto start = high_resolution_clock::now();
-	Board b;
-	search::SearchInfo nnue_search_info;
+	board b;
+	search::search_info nnue_search_info;
     nnue_search_info.eval_function = evaluate;
     nnue_search_info.time = 10000;
 
-    search::SearchInfo classical_search_info;
+    search::search_info classical_search_info;
     classical_search_info.eval_function = evaluate_classical;
     classical_search_info.time = 10000;
 
@@ -537,12 +569,12 @@ int main()
 
     
 	std::cout << wins << "/" << draws << "/" << loses << "\n\n";
-    for (int i = 0; i < 1; i++)
-    {
-        auto games = gg.generate_games(false, true, 1, 2);
-        auto filename = gg.save_to_file(games);
-        //gg.convert_to_input_type(filename);
-    }
+    //for (int i = 0; i < 1; i++)
+    //{
+    //    auto games = gg.generate_games(false, true, 1, 2);
+    //    auto filename = gg.save_to_file(games);
+    //    //gg.convert_to_input_type(filename);
+    //}
 
 }   
     
@@ -550,8 +582,8 @@ int main()
     //int bits[6];
     //std::memset(configs, 0, sizeof(configs));
     //std::memset(bits, 0, sizeof(bits));
-    //Board b;
-    //search::SearchInfo s;
+    //board b;
+    //search::search_info s;
     //s.eval_function = evaluate;
     //
     

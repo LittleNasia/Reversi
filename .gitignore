@@ -341,3 +341,5 @@ ASALocalRun/
 healthchecksdb
 *.sinput
 *.sbin
+*.exe
+*.bak

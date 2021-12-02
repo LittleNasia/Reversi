@@ -4,7 +4,7 @@
 #include <vector>
 #include <atomic>
 
-#include "Board.h"
+#include "board.h"
 #include "Search.h"
 #include "Utils.h"
 
@@ -36,7 +36,7 @@ struct Game
 };
 
 
-class GameGenerator
+class game_generator
 {
 public:
 	static constexpr int book_size = 1000000;
@@ -60,7 +60,7 @@ public:
 	//lambda = 0 -> use purely game results, lambda = 100 -> use purely evaluation, anything inbetween is the interpolation of the two
 	static constexpr int lambda = 0;
 
-	GameGenerator();
+	game_generator();
 
 
 	//takes the filename as argument, returns the vector of games, can be for example rescored or just read for fun

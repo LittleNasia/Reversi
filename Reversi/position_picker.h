@@ -1,5 +1,5 @@
 #pragma once
-#include "Board.h"
+#include "board.h"
 
 enum symmetries
 {
@@ -115,7 +115,7 @@ struct pos_entry
 
 
 
-class PositionPicker
+class position_picker
 {
 public:
 	static constexpr int size = 10000000;

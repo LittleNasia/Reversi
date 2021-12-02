@@ -1,13 +1,13 @@
-#include "NN_accumulator.h"
-#include "Board.h"
+#include "nnue_accumulator.h"
+#include "board.h"
 #include <algorithm>
 
-NN::NN_accumulator::NN_accumulator()
+NN::nnue_accumulator::nnue_accumulator()
 {
 	reset();
 }
 
-void NN::NN_accumulator::read_weights(float* weights_from_file, float* biases_from_file)
+void NN::nnue_accumulator::read_weights(float* weights_from_file, float* biases_from_file)
 {
 	if (!weights_loaded)
 	{
@@ -43,7 +43,7 @@ void NN::NN_accumulator::read_weights(float* weights_from_file, float* biases_fr
 
 }
 
-void NN::NN_accumulator::reset()
+void NN::nnue_accumulator::reset()
 {
 	//set everything to zero
 	std::memset(output, 0, sizeof(output));
@@ -51,8 +51,8 @@ void NN::NN_accumulator::reset()
 }
 
 //side_to_move is the side that is *making* the move, not the side that is moving *after* the move has been played
-void NN::NN_accumulator::update_accumulator(const NN_accumulator& old_acc, const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move,
-	const Board& b, bool passing_move)
+void NN::nnue_accumulator::update_accumulator(const nnue_accumulator& old_acc, const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move,
+	const board& b, bool passing_move)
 {
 	
 	int curr_config = b.get_playfield_config();
@@ -154,7 +154,7 @@ void NN::NN_accumulator::update_accumulator(const NN_accumulator& old_acc, const
 
 //computes the output as if it was a normal forward pass
 //only to be used as a test function
-void NN::NN_accumulator::recompute_acc(int16_t* input)
+void NN::nnue_accumulator::recompute_acc(int16_t* input)
 {
 	for (int output_node = 0; output_node < layer_sizes[1]; output_node++)
 	{
@@ -174,7 +174,7 @@ void NN::NN_accumulator::recompute_acc(int16_t* input)
 
 }
 
-void NN::NN_accumulator::refresh(bitboard white_bb, bitboard black_bb, uint8_t board_config)
+void NN::nnue_accumulator::refresh(bitboard white_bb, bitboard black_bb, uint8_t board_config)
 {
 	bitboard bbs[] = { black_bb,white_bb };
 	//set the output to be equal to biases

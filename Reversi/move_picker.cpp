@@ -1,5 +1,5 @@
-#include "MovePicker.h"
-#include "Evaluate.h"
+#include "move_picker.h"
+#include "evaluate.h"
 
 
 #include <iterator>
@@ -13,7 +13,7 @@ constexpr int base_weights[64] = { 500, -50, 100, 50, 50, 100, -50, 500,
 -50, -50, 0, 0, 0, 0, -50, -50,
 500, -50, 100, 50, 50, 100, -50, 500, };
 
-MovePicker::MovePicker(Board& b, const TT_entry& entry, const bool found_tt_entry, const search::SearchInfo& s)
+move_picker::move_picker(board& b, const tt_entry& entry, const bool found_tt_entry, const search::search_info& s)
 {
 	const auto moves = b.get_moves();
 	move_count = b.get_num_moves();
@@ -36,7 +36,7 @@ MovePicker::MovePicker(Board& b, const TT_entry& entry, const bool found_tt_entr
 	std::sort(std::begin(weighted_moves), std::begin(weighted_moves) + move_count, ordering_function);
 }
 
-MovePicker::MovePicker(Board& b)
+move_picker::move_picker(board& b)
 {
 	const auto moves = b.get_moves();
 	move_count = b.get_num_moves();
@@ -47,11 +47,11 @@ MovePicker::MovePicker(Board& b)
 	}
 }
 
-uint16_t MovePicker::get_move()
+uint16_t move_picker::get_move()
 {
 	if (current_move >= move_count)
 	{
-		return Board::passing_index;
+		return board::passing_index;
 	}
 	return weighted_moves[current_move++].move;
 }

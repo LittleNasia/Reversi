@@ -1,5 +1,5 @@
 #pragma once
-#include "BitUtilities.h"
+#include "bit_utilities.h"
 #include <iostream>
 
 inline constexpr bool use_nnue = true;

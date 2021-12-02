@@ -1,27 +1,27 @@
-#include "TT.h"
+#include "tt.h"
 #include <cstring>
 #include <cstdint>
 
 
-void TT::clear()
+void tt::clear()
 {
-	std::memset(_TT, 0, sizeof(_TT));
+	std::memset(_tt, 0, sizeof(_tt));
 }
 
-void TT::store(const TT_entry& entry, bool always_replace)
+void tt::store(const tt_entry& entry, bool always_replace)
 {
 	//https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
 	const int index = ((uint32_t)entry.posKey * (uint64_t)size) >> 32;
-	auto& bucket = _TT[index];
+	auto& bucket = _tt[index];
 	//if we have a free space in a bucket, try to store it there
-	if (bucket.curr_elements < Bucket::max_elements)
+	if (bucket.curr_elements < bucket::max_elements)
 	{
 		bucket.elements[bucket.curr_elements++] = entry;
 	}
 	//look if we can replace any element in the current index
 	else
 	{
-		for (int bucket_index = 0; bucket_index < Bucket::max_elements; bucket_index++)
+		for (int bucket_index = 0; bucket_index < bucket::max_elements; bucket_index++)
 		{
 			auto& bucket_elem = bucket.elements[bucket_index];
 			//replace the same position, or replace based on depth
@@ -37,17 +37,17 @@ void TT::store(const TT_entry& entry, bool always_replace)
 	}
 }
 
-const TT_entry& TT::get(const TT_entry& entry, bool& found)
+const tt_entry& tt::get(const tt_entry& entry, bool& found)
 {
 	return this->get(entry.posKey, found);
 } 
 
-const TT_entry& TT::get(unsigned long long posKey, bool& found)
+const tt_entry& tt::get(unsigned long long posKey, bool& found)
 {
 	//https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
 	const int index = ((uint32_t)posKey * (uint64_t)size) >> 32;
-	auto& bucket = _TT[index];
-	for (int bucket_index = 0; bucket_index < Bucket::max_elements; bucket_index++)
+	auto& bucket = _tt[index];
+	for (int bucket_index = 0; bucket_index < bucket::max_elements; bucket_index++)
 	{
 		//if we found element with our posKey, return it
 		if (bucket.elements[bucket_index].posKey == posKey)

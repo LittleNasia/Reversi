@@ -1,6 +1,6 @@
 #pragma once 
-#include "Board.h"
-#include "TT.h"
+#include "board.h"
+#include "tt.h"
 #include "Search.h"
 
 struct weighted_move
@@ -9,11 +9,11 @@ struct weighted_move
 	int16_t weight;
 };
 
-class MovePicker
+class move_picker
 {
 public:
-	MovePicker(Board& b, const TT_entry& entry, const bool found_tt_entry, const search::SearchInfo& s);
-	MovePicker(Board& b);
+	move_picker(board& b, const tt_entry& entry, const bool found_tt_entry, const search::search_info& s);
+	move_picker(board& b);
 
 	uint16_t get_move();
 

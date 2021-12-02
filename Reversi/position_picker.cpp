@@ -1,8 +1,8 @@
-#include "PositionPicker.h"
+#include "position_picker.h"
 
 
 
-bool PositionPicker::enter_and_get_position(const bitboard side_to_move_bb, const bitboard opposite_side_bb, pos_entry& ret_val)
+bool position_picker::enter_and_get_position(const bitboard side_to_move_bb, const bitboard opposite_side_bb, pos_entry& ret_val)
 {
 	int index = rng::rng() % size;
 	int score = ret_val.score;
@@ -20,7 +20,7 @@ bool PositionPicker::enter_and_get_position(const bitboard side_to_move_bb, cons
 }
 
 
-pos_entry PositionPicker::get_symmetries(const bitboard side_to_move_bb, const bitboard opposite_side_bb)
+pos_entry position_picker::get_symmetries(const bitboard side_to_move_bb, const bitboard opposite_side_bb)
 {
 	pos_entry ret_val;
 	ret_val.valid = true;

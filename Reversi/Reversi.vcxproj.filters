@@ -16,84 +16,99 @@
     <Filter Include="SimplePlayers">
       <UniqueIdentifier>{4cc9e3d1-f17d-40f6-a04d-61b914e9ada4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\CNN">
+      <UniqueIdentifier>{8dd2d084-572d-4383-bbcd-bb0efbcc1c38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\NNUE">
+      <UniqueIdentifier>{53557cc2-2882-4ca9-bae8-716b6fe66d0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\NNUE">
+      <UniqueIdentifier>{f02cee3e-03cf-4f0d-a83d-244397d4f3e4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LinearLayer.h">
+    <ClInclude Include="move_picker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MovePicker.h">
+    <ClInclude Include="position_picker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NN_accumulator.h">
+    <ClInclude Include="search.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PositionPicker.h">
+    <ClInclude Include="tt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Search.h">
+    <ClInclude Include="utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TT.h">
+    <ClInclude Include="bit_utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="board.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BitUtilities.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Board.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BoardEvaluator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ClippedReLU.h">
+    <ClInclude Include="board_evaluator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Evaluate.h">
+    <ClInclude Include="evaluate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GameGenerator.h">
+    <ClInclude Include="game_generator.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="clipped_relu.h">
+      <Filter>Header Files\NNUE</Filter>
+    </ClInclude>
+    <ClInclude Include="nnue_accumulator.h">
+      <Filter>Header Files\NNUE</Filter>
+    </ClInclude>
+    <ClInclude Include="linear_layer.h">
+      <Filter>Header Files\NNUE</Filter>
+    </ClInclude>
+    <ClInclude Include="conv_layer.h">
+      <Filter>Header Files\CNN</Filter>
+    </ClInclude>
+    <ClInclude Include="matrix.h">
+      <Filter>Header Files\CNN</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PositionPicker.cpp">
+    <ClCompile Include="position_picker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Reversi.cpp">
+    <ClCompile Include="reversi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Search.cpp">
+    <ClCompile Include="search.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TT.cpp">
+    <ClCompile Include="tt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Board.cpp">
+    <ClCompile Include="board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BoardEvaluator.cpp">
+    <ClCompile Include="board_evaluator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Evaluate.cpp">
+    <ClCompile Include="evaluate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GameGenerator.cpp">
+    <ClCompile Include="game_generator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MovePicker.cpp">
+    <ClCompile Include="move_picker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NN_accumulator.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="nnue_accumulator.cpp">
+      <Filter>Source Files\NNUE</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

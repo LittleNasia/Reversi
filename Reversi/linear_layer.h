@@ -1,17 +1,17 @@
 #pragma once
-#include "ClippedReLU.h"
+#include "clipped_relu.h"
 #include <algorithm>
 
 namespace NN
 { 
 	template<int in_neurons,int out_neurons>
-	struct LinearLayer
+	struct linear_layer
 	{
 		int16_t output[out_neurons];
 		int8_t weights[out_neurons][in_neurons];
 		int16_t biases[out_neurons];
 
-		LinearLayer()
+		linear_layer()
 		{
 			for (int i = 0; i < in_neurons; i++)
 			{

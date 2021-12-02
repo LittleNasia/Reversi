@@ -5,7 +5,7 @@
 #include "Search.h"
 namespace cmd
 {
-	inline thread_local Board rootPos;
+	inline thread_local board rootPos;
 	void parse(const std::string& cmd)
 	{
 		if (cmd.substr(0, 2) == "go")
@@ -33,7 +33,7 @@ namespace cmd
 			}
 			
 			int score;
-			search::SearchInfo s;
+			search::search_info s;
 			s.eval_function = evaluate;
 			s.time = time;
 			const auto move = search::search_move(rootPos, depth, true, score, s);
@@ -42,7 +42,7 @@ namespace cmd
 		}
 		else if (cmd.substr(0, 8) == "position")
 		{
-			rootPos = Board();
+			rootPos = board();
 			std::stringstream ss(cmd.substr(8));
 			int move = 0;
 			while (static_cast<bool>(ss >> move))

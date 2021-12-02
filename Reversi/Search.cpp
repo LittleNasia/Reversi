@@ -1,8 +1,8 @@
 #include "Search.h"
 #include "Utils.h"
-#include "TT.h"
-#include "Evaluate.h"
-#include "MovePicker.h"
+#include "tt.h"
+#include "evaluate.h"
+#include "move_picker.h"
 
 #include <unordered_map>
 #include <iostream>
@@ -10,7 +10,7 @@
 
 
 using namespace std::chrono;
-#include "TT.h"
+#include "tt.h"
 namespace search
 {
 
@@ -29,7 +29,7 @@ namespace search
 		rng::y = 362436069;
 		rng::z = 521288629;
 
-		for (int index = 0; index < Board::rows * Board::cols; index++)
+		for (int index = 0; index < board::rows * board::cols; index++)
 		{
 			for (int color = 0; color < COLOR_NONE; color++)
 			{
@@ -47,7 +47,7 @@ namespace search
 		rng::z = rng_backup_z;
 	}
 
-	const unsigned long long hash(const Board& b)
+	const unsigned long long hash(const board& b)
 	{
 		bitboard board[COLOR_NONE];
 		std::memcpy(board, &b.get_board(), sizeof(bitboard) * COLOR_NONE);
@@ -70,21 +70,21 @@ namespace search
 
 	//function is only to be called if the hash of the stored position matches
 	//returns value_inf if can't return a value, otherwise value 
-	inline constexpr int probeEntry(const TT_entry& entry, const int depth, const int alpha, const int beta)
+	inline constexpr int probeEntry(const tt_entry& entry, const int depth, const int alpha, const int beta)
 	{
 		if (entry.depth >= depth)
 		{
 			//the score is exact, we can just return it 
-			if (entry.flag == TT_entry::flag_exact)
+			if (entry.flag == tt_entry::flag_exact)
 			{
 				return entry.score;
 			}
-			else if ((entry.flag == TT_entry::flag_alpha)
+			else if ((entry.flag == tt_entry::flag_alpha)
 				&& (entry.score <= alpha))
 			{
 				return alpha;
 			}
-			else if ((entry.flag == TT_entry::flag_beta)
+			else if ((entry.flag == tt_entry::flag_beta)
 				&& (entry.score >= beta))
 			{
 				return beta;
@@ -95,7 +95,7 @@ namespace search
 
 	
 	template<bool root = false>
-	int search(Board& b, int depth, int alpha, int beta, SearchInfo& s, bool doNull = true)
+	int search(board& b, int depth, int alpha, int beta, search_info& s, bool doNull = true)
 	{
 		if ((!(nodes % 1000)))
 		{
@@ -132,7 +132,7 @@ namespace search
 
 		int best_move = 0;
 		int best_score = -value_inf;
-		int TT_flag = TT_entry::flag_alpha;
+		int tt_flag = tt_entry::flag_alpha;
 
 		const unsigned long long key = hash(b);
 		bool found = false;
@@ -200,7 +200,7 @@ namespace search
 		/*
 		if ((numMoves) && (doNull) && (depth > 2))
 		{
-			b.do_move(Board::passing_index);
+			b.do_move(board::passing_index);
 			int value = -search<false>(b, depth - 5, -beta, -beta + 1, s, false);
 			b.undo_move();
 			if (value >= beta)
@@ -211,7 +211,7 @@ namespace search
 		*/
 
 
-		MovePicker mp(b, entry, found, s);
+		move_picker mp(b, entry, found, s);
 
 		bool searching_pv = true;
 		int current_move = 0;
@@ -225,13 +225,13 @@ namespace search
 			}
 			s.ply++;
 			const auto current_move = mp.get_move();
-			if (mp.get_move_count() && (current_move == Board::passing_index))
+			if (mp.get_move_count() && (current_move == board::passing_index))
 			{
 				break;
 			}
 			
 			b.do_move(current_move);
-			int extension = (current_move == Board::passing_index) ? 1 : 0;
+			int extension = (current_move == board::passing_index) ? 1 : 0;
 
 			//principal variation search
 			int score;
@@ -272,10 +272,10 @@ namespace search
 				{
 					alpha = score;
 					searching_pv = false;
-					TT_flag = TT_entry::flag_exact;
+					tt_flag = tt_entry::flag_exact;
 					if (alpha >= beta)
 					{
-						transposition_table.store({ key, best_move, beta, depth, TT_entry::flag_beta });
+						transposition_table.store({ key, best_move, beta, depth, tt_entry::flag_beta });
 						return beta;
 					}
 					//s.history_data[best_move] += depth * depth;
@@ -286,11 +286,11 @@ namespace search
 				break;
 			}
 		}
-		transposition_table.store({ key, best_move, alpha, depth, TT_flag }, root);
+		transposition_table.store({ key, best_move, alpha, depth, tt_flag }, root);
 		return best_score;
 	}
 	constexpr bool Root = true;
-	void aspiration_window(Board& b, int depth, int score, SearchInfo& s)
+	void aspiration_window(board& b, int depth, int score, search_info& s)
 	{
 		int alpha = -value_inf;
 		int beta = value_inf;
@@ -336,7 +336,7 @@ namespace search
 		}
 	}
 
-	int search_move(Board& b, int depth, bool print, int& score, SearchInfo& s)
+	int search_move(board& b, int depth, bool print, int& score, search_info& s)
 	{
 		if (b.is_over())
 		{
@@ -375,7 +375,7 @@ namespace search
 			if (print)
 				std::cout << "depth: " << d << " moves : ";
 			int num_moves = 0;
-			//get moves from TT, make sure move is legal as well
+			//get moves from tt, make sure move is legal as well
 			while (true)
 			{
 				unsigned long long key = hash(b);
@@ -435,7 +435,7 @@ namespace search
 			best_move_index = entry.move;
 			//std::cout <<"\nentry move "<< entry.move << "\n";
 		}
-		//this should never happen, root pos will always be added last to the TT, and it will always have the highest priority
+		//this should never happen, root pos will always be added last to the tt, and it will always have the highest priority
 		//its depth is simply the highest possible and the same keys gets overwritten even with lower depth
 		else if (!s.interrupted)
 		{

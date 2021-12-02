@@ -1,7 +1,7 @@
 #pragma once
 #include "Utils.h"
-#include "NN_accumulator.h"
-#include "ClippedReLU.h"
+#include "nnue_accumulator.h"
+#include "clipped_relu.h"
 
 
 
@@ -18,11 +18,11 @@ struct Move
 	int64_t forced_passes;
 };
 
-class Board
+class board
 {
 public:
 	
-	Board();
+	board();
 	static constexpr int rows = 8;
 	static constexpr int cols = 8;
 	static constexpr int passing_index = rows * cols;
@@ -68,7 +68,7 @@ private:
 	void capture(uint8_t move, const bool update_accumulator);
 
 	//stores an accumulator for each of the ply of the game 
-	NN::NN_accumulator accumulator_history[Board::max_ply];
+	NN::nnue_accumulator accumulator_history[board::max_ply];
 	Move move_history[max_ply];
 	moves_array available_moves;
 	playfield_bitboard bb;
