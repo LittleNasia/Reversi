@@ -9,6 +9,7 @@ class matrix
 public:
 	matrix()
 	{
+		//zero
 		set_zero();
 	}
 	matrix(float* vals)
