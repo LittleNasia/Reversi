@@ -231,7 +231,6 @@ namespace CNN
 			const auto& second_conv_layer_output = second_conv_layer.forward(first_conv_layer_output);
 			const auto& third_conv_layer_output = third_conv_layer.forward(second_conv_layer_output);
 			const auto& third_conv_layer_flattened_output = third_conv_layer.flatten();
-
 			const auto& fully_connected_layer_output = fully_connected_layer.forward(third_conv_layer_flattened_output);
 			const auto& final_layer_output = output_layer.forward(fully_connected_layer_output);
 

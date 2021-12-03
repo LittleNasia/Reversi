@@ -21,16 +21,16 @@ public:
 	using weights_matrix = matrix<filter_rows, filter_cols>;
 
 private:
-	output_type m_output[output_channels];
-	weights_matrix m_filters[input_channels][output_channels];
-	float m_biases[output_channels];
-	output_type_flattened m_flattened_output;
+	alignas(64)output_type m_output[output_channels];
+	alignas(64)weights_matrix m_filters[input_channels][output_channels];
+	alignas(64)float m_biases[output_channels];
+	alignas(64)output_type_flattened m_flattened_output;
 
 	//bias templates are used because of the padding
 	//instead of calculating which index doesn't belong to the zero padding every time forward pass is run (and so bias isn't added there)
 	//we can just calculate that once, and then just memcpy the result at the begining of each forward pass
-	output_type m_output_bias_template[output_channels];
-	output_type_flattened m_flattened_output_bias_template;
+	alignas(64)output_type m_output_bias_template[output_channels];
+	alignas(64)output_type_flattened m_flattened_output_bias_template;
 
 public:
 	const output_type* getOutput() const
@@ -156,17 +156,15 @@ public:
 							else
 							{
 								//the order of loops if we were to convert a 3D layer to 1D layer is as follows:
-								// 1. input_channel
-								// 2. row
-								// 3. col
-								// 4. output_channel
+								// 1. row
+								// 2. col
+								// 3. output_channel
 								//however, our order is different, and so we can't just do index++ in the innermost loop
 								//this is due to how tensorflow works
 								//this index calculation is made to make sure it is compatible with it
 								const int flattened_output_index = output_channel +
 										output_col_index * output_channels +
 										output_row_index * padded_output_cols * output_channels;
-								//std::cout << flattened_output_index << " " << flattened_output_size << " " << sum << std::endl;
 								m_flattened_output[flattened_output_index] += sum;
 							}
 							
