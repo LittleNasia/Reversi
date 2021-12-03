@@ -10,12 +10,14 @@ public:
 	matrix()
 	{
 		//zero
-		set_zero();
+		set_val(0.0);
 	}
 	matrix(float* vals)
 	{
 		std::memcpy(_data, vals, sizeof(_data));
 	}
+	constexpr float* begin() const { return (float*)(_data); }
+	constexpr float* end() const { return (float*)(_data + rows * cols); }
 	inline float& operator()(const int row, const int col)
 	{
 		return _data[row][col];
@@ -24,7 +26,7 @@ public:
 	{
 		return _data[row][col];
 	}
-	inline const float* get_row(const int row) const
+	inline constexpr const float* get_row(const int row) const
 	{
 		return _data[row];
 	}
@@ -36,10 +38,17 @@ public:
 	{
 		return cols;
 	}
-	void set_zero()
+	void set_val(const float val)
 	{
-		std::memset(_data, 0, sizeof(_data));
+		for (int row = 0; row < rows; row++)
+		{
+			for (int col = 0; col < cols; col++)
+			{
+				_data[row][col] = val;
+			}
+		}
 	}
+
 private:
 	float _data[rows][cols];
 };

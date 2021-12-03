@@ -10,6 +10,8 @@
 #include "position_picker.h"
 #include "cmd.h"
 #include "conv_layer.h"
+#include "cnn_input_layer.h"
+#include "cnn.h"
 
 #include <unordered_set>
 #include <algorithm>
@@ -416,6 +418,17 @@ void tune_move_ordering()
 int main()
 {
     search::init();
+    board b;
+    CNN::cnn network;
+    network.evaluate(b);
+    /*CNN::cnn_input_layer layer;
+    b.do_random_move();
+    b.do_random_move();
+    b.do_random_move();
+    b.do_random_move();
+    b.do_random_move();
+    b.print_board();
+    layer.prepare_output(b);*/
     /*std::string filename;
     std::cout << "please enter the filename to convert\n";
     std::cin >> filename;
@@ -433,7 +446,7 @@ int main()
             }
         }
     }
-    conv_layer<8, 8, 5, 4, 4, 5, 5, 8, 1, 2, 1, 2, false> l;
+    conv_layer<8, 8, 5, 4, 4, 5, 5, 8, 1, 2, 1, 2, true> l;
     const auto& ret = l.forward(input);
     for (int output_channel = 0; output_channel < 8; output_channel++)
     {
@@ -446,6 +459,10 @@ int main()
             std::cout << "\n";
         }
         std::cout << "\n\n";
+    }
+    for (int neuron = 0; neuron < 8 * 8 * 5; neuron++)
+    {
+        std::cout << l.flatten()[neuron] << " ";
     }
     return 0;*/
     //gg.convert_to_input_type("games1.sbin");
@@ -481,7 +498,7 @@ int main()
 
 
 	auto start = high_resolution_clock::now();
-	board b;
+	//board b;
 	search::search_info nnue_search_info;
     nnue_search_info.eval_function = evaluate;
     nnue_search_info.time = 10000;

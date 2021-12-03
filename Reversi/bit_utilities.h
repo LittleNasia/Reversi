@@ -3,7 +3,10 @@
 #include <intrin.h>
 #include <cstdint>
 
-using bitboard = uint64_t;;
+using bitboard = uint64_t;
+
+constexpr int board_rows = 8;
+constexpr int board_cols = 8;
 
 inline constexpr bitboard up(const bitboard b)
 {
@@ -38,6 +41,19 @@ inline constexpr bitboard right_up(const bitboard b)
 inline constexpr bitboard right_down(const bitboard b)
 {
 	return  down(right(b));
+}
+
+struct point
+{
+	int row;
+	int col;
+};
+namespace CNN
+{
+	constexpr const point to_2d_index(int index)
+	{
+		return {(board_rows - (index / board_rows + 1)), (board_cols - (index % board_cols + 1))};
+	}
 }
 
 #include <iostream>

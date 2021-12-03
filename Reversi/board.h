@@ -23,8 +23,8 @@ class board
 public:
 	
 	board();
-	static constexpr int rows = 8;
-	static constexpr int cols = 8;
+	static constexpr int rows = board_rows;
+	static constexpr int cols = board_cols;
 	static constexpr int passing_index = rows * cols;
 	static constexpr int max_ply = 100;
 	static inline constexpr unsigned int to_1d(const unsigned int row, const unsigned int col)
@@ -42,13 +42,16 @@ public:
 	//does check for legality of the move
 	const bool do_move_is_legal(const int square, const bool update_accumulator = use_nnue);
 	//if you want to make a move using coordinates, go ahead, define it first though
-	const bool do_move(const Point target_square);
+	const bool do_move(const point target_square);
 	//gets the available moves list and then makes the move, returning the move made
 	int do_random_move(bool update_accumulator = true);
 	//does whatever the lowest index move is 
 	int do_first_move();
 	//returns the pointer to the available moves array
 	const move_type* get_moves();
+	//returns the bitmask of the available moves
+	const bitboard get_moves_bitmask() const;
+
 	void print_board();
 	void new_game();
 	void undo_move();

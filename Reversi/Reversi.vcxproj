@@ -24,6 +24,9 @@
     <ClInclude Include="board_evaluator.h" />
     <ClInclude Include="clipped_relu.h" />
     <ClInclude Include="cmd.h" />
+    <ClInclude Include="cnn.h" />
+    <ClInclude Include="cnn_input_layer.h" />
+    <ClInclude Include="cnn_linear_layer.h" />
     <ClInclude Include="conv_layer.h" />
     <ClInclude Include="evaluate.h" />
     <ClInclude Include="game_generator.h" />
@@ -40,6 +43,7 @@
     <ClCompile Include="board.cpp" />
     <ClCompile Include="board_evaluator.cpp" />
     <ClCompile Include="cmd.cpp" />
+    <ClCompile Include="cnn_input_layer.cpp" />
     <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="game_generator.cpp" />
     <ClCompile Include="move_picker.cpp" />

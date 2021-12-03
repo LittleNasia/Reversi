@@ -25,6 +25,9 @@
     <Filter Include="Source Files\NNUE">
       <UniqueIdentifier>{f02cee3e-03cf-4f0d-a83d-244397d4f3e4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\CNN">
+      <UniqueIdentifier>{8a18a2b9-1219-4a8a-a669-80cf4fad09b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="move_picker.h">
@@ -75,6 +78,15 @@
     <ClInclude Include="matrix.h">
       <Filter>Header Files\CNN</Filter>
     </ClInclude>
+    <ClInclude Include="cnn_input_layer.h">
+      <Filter>Header Files\CNN</Filter>
+    </ClInclude>
+    <ClInclude Include="cnn_linear_layer.h">
+      <Filter>Header Files\CNN</Filter>
+    </ClInclude>
+    <ClInclude Include="cnn.h">
+      <Filter>Header Files\CNN</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="position_picker.cpp">
@@ -109,6 +121,9 @@
     </ClCompile>
     <ClCompile Include="nnue_accumulator.cpp">
       <Filter>Source Files\NNUE</Filter>
+    </ClCompile>
+    <ClCompile Include="cnn_input_layer.cpp">
+      <Filter>Source Files\CNN</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

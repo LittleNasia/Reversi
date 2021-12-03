@@ -11,11 +11,6 @@ enum Color
 	COLOR_NONE
 };
 
-struct Point
-{
-	int16_t row;
-	int16_t col;
-};
 
 using ScalarType = float;
 inline constexpr int NN_input_channels = 2;
@@ -34,7 +29,7 @@ enum Direction
 };
 
 
-inline constexpr Point directions[DIRECTION_NONE] =
+inline constexpr point directions[DIRECTION_NONE] =
 {
 	{-1,-1},
 	{-1,0},
@@ -170,6 +165,16 @@ namespace NN
 
 	constexpr int weight_scaling_factor = 64;
 	constexpr int input_scaling_factor = 127;
+}
+
+namespace CNN
+{
+	//black, white, both, notblack, notwhite, available_moves
+	constexpr int input_channels = 6;
+
+
+
+
 }
 
 

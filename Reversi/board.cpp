@@ -80,6 +80,23 @@ void board::new_game()
 
 const board::move_type* board::get_moves()
 {
+	auto result = get_moves_bitmask();
+
+	//convert bits to array of move indices
+	unsigned long long move_index = 0;
+	while (result)
+	{
+		available_moves[move_index] = _lzcnt_u64(result) ^ 63;
+		result ^= (1ULL << available_moves[move_index++]);
+	}
+	num_moves = move_index;
+	available_moves[move_index] = passing_index;
+
+	return available_moves;
+}
+
+const bitboard board::get_moves_bitmask() const
+{
 	const auto& own_bb = side_to_move == COLOR_WHITE ? bb.white_bb : bb.black_bb;
 	const auto& enemy_bb = side_to_move == COLOR_WHITE ? bb.black_bb : bb.white_bb;
 	const auto& empty = ~(own_bb | enemy_bb);
@@ -108,7 +125,7 @@ const board::move_type* board::get_moves()
 	//victims are enemy_bb pieces directly above our own, we get empty squares directly above the victims that we can "sandwich"
 	//that gives us the moves
 	result |= up(victims) & empty;
-	
+
 	//same logic applies to all other directions
 
 	victims = down(own_bb) & enemy_bb;
@@ -126,7 +143,7 @@ const board::move_type* board::get_moves()
 		victims |= right(victims) & enemy_bb;
 	result |= right(victims) & empty;
 
-	
+
 	constexpr int iterations = ((rows - 3) < (cols - 3)) ? (rows - 3) : (cols - 3);
 
 	victims = left_down(own_bb) & enemy_bb;
@@ -139,7 +156,7 @@ const board::move_type* board::get_moves()
 		victims |= right_down(victims) & enemy_bb;
 	result |= right_down(victims) & empty;
 
-	victims = left_up (own_bb)&enemy_bb;
+	victims = left_up(own_bb) & enemy_bb;
 	for (int iteration = 0; iteration < iterations; iteration++)
 		victims |= left_up(victims) & enemy_bb;
 	result |= left_up(victims) & empty;
@@ -149,18 +166,7 @@ const board::move_type* board::get_moves()
 		victims |= right_up(victims) & enemy_bb;
 	result |= right_up(victims) & empty;
 
-
-	//convert bits to array of move indices
-	unsigned long long move_index = 0;
-	while (result)
-	{
-		available_moves[move_index] = _lzcnt_u64(result) ^ 63;
-		result ^= (1ULL << available_moves[move_index++]);
-	}
-	num_moves = move_index;
-	available_moves[move_index] = passing_index;
-
-	return available_moves;
+	return result;
 }
 
 //only to be called with a move that is legal for sure
