@@ -17,7 +17,7 @@ public:
 		std::memcpy(_data, vals, sizeof(_data));
 	}
 	constexpr float* begin() const { return (float*)(_data); }
-	constexpr float* end() const { return (float*)(_data + rows * cols); }
+	constexpr float* end() const { return (float*)(_data[rows]); }
 	inline float& operator()(const int row, const int col)
 	{
 		return _data[row][col];

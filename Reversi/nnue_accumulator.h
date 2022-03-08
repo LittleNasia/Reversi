@@ -23,7 +23,7 @@ namespace NN
 		void reset();
 
 		//side_to_move is the side that is *making* the move, not the side that is moving *after* the move has been played
-		void update_accumulator(const nnue_accumulator& old_acc, const bitboard added_pieces, const bitboard captured_pieces, const Color side_to_move,
+		void update_accumulator(const nnue_accumulator& old_acc, const bitboard added_pieces, const bitboard captured_pieces, const color side_to_move,
 			const board& b, bool passing_move = false);
 
 		//computes the output as if it was a normal forward pass

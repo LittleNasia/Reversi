@@ -1,7 +1,7 @@
 #pragma once
 #include "Utils.h"
 #include "nnue_accumulator.h"
-#include "clipped_relu.h"
+#include "nnue_clipped_relu.h"
 
 
 
@@ -32,7 +32,7 @@ public:
 		return row * cols + col;
 	}
 	//using 8 bit per move seems pretty nice storage-wise, allows to copy the entire moves-array so much faster
-	using move_type = uint8_t;
+	using move_type = uint32_t;
 	//this assumes that there will never be more than 32 moves in a position
 	//32 is a pretty nice number, that 
 	using moves_array = move_type[rows * cols / 2];
@@ -56,6 +56,8 @@ public:
 	void new_game();
 	void undo_move();
 
+	void set_board_state(const playfield_bitboard& target_bb);
+
 	const uint8_t get_playfield_config() const;
 	const playfield_bitboard& get_board() const { return bb; }
 	const playfield_bitboard& get_first_moves() const { return first_moves; }
@@ -63,22 +65,25 @@ public:
 	const int get_score() const { return __popcnt64(bb.black_bb) - __popcnt64(bb.white_bb); }
 	const int is_over() const { return forced_passes > 1; }
 	const int get_ply() const { return ply; }
-	const Color get_side_to_move() const { return side_to_move; }
+	const color get_side_to_move() const { return side_to_move; }
 	
+#if use_nnue
 	//returns the output of the accumulator from the perspective of the current side to move 
 	const int16_t* get_current_accumulator_output() const { return accumulator_history[ply].output[side_to_move]; }
+#endif
 private:
 	void capture(uint8_t move, const bool update_accumulator);
-
+#if use_nnue
 	//stores an accumulator for each of the ply of the game 
 	NN::nnue_accumulator accumulator_history[board::max_ply];
+#endif
 	Move move_history[max_ply];
 	moves_array available_moves;
 	playfield_bitboard bb;
 	playfield_bitboard first_moves;
 	int64_t forced_passes;
-	Color side_to_move;
-	Color result;
+	color side_to_move;
+	color result;
 	int ply;
 	int num_moves;
 	int score;

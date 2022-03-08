@@ -18,7 +18,9 @@ namespace CNN
 
 	cnn_input_layer::output_type* cnn_input_layer::prepare_output(const input_type& b)
 	{
-		Color side_to_move = b.get_side_to_move();
+		std::memset(&m_output, 0, sizeof(m_output));
+
+		color side_to_move = b.get_side_to_move();
 		const bitboard side_to_move_bb = side_to_move == COLOR_WHITE ? b.get_board().white_bb : b.get_board().black_bb;
 		const bitboard opposite_side_bb = side_to_move != COLOR_WHITE ? b.get_board().white_bb : b.get_board().black_bb;
 		const bitboard both = side_to_move_bb | opposite_side_bb;
@@ -32,18 +34,19 @@ namespace CNN
 		fill_plane(not_side_to_move_bb, 3);
 		fill_plane(not_opposite_side_bb, 4);
 		fill_plane(legal_moves_bb, 5);
-		for (int channel = 0; channel < input_channels; channel++)
+
+		/*for (int channel = 0; channel < input_channels; channel++)
 		{
 			for (int row = 0; row < board::rows; row++)
 			{
 				for (int col = 0; col < board::cols; col++)
 				{
-					std::cout << "[" << m_output[channel](row, col) << "]";
+					std::cout << "[" << ((m_output[channel](row, col)==0)?" ":"X") << "]";
 				}
 				std::cout << "\n";
 			}
 			std::cout << "\n";
-		}
+		}*/
 
 		return m_output;
 	}

@@ -16,9 +16,6 @@
     <Filter Include="SimplePlayers">
       <UniqueIdentifier>{4cc9e3d1-f17d-40f6-a04d-61b914e9ada4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\CNN">
-      <UniqueIdentifier>{8dd2d084-572d-4383-bbcd-bb0efbcc1c38}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\NNUE">
       <UniqueIdentifier>{53557cc2-2882-4ca9-bae8-716b6fe66d0e}</UniqueIdentifier>
     </Filter>
@@ -27,6 +24,30 @@
     </Filter>
     <Filter Include="Source Files\CNN">
       <UniqueIdentifier>{8a18a2b9-1219-4a8a-a669-80cf4fad09b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\linear regression">
+      <UniqueIdentifier>{c41410e1-7586-4350-bead-5856a06871d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\linear regression">
+      <UniqueIdentifier>{22bac886-d578-452f-b184-c95e10dbcdeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MCTS">
+      <UniqueIdentifier>{8e2c94cc-c803-4f5e-ac9f-90e8815566f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MCTS">
+      <UniqueIdentifier>{2538d584-6f36-403a-a1bc-bdffffd9209a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MLP">
+      <UniqueIdentifier>{f833e002-a7c0-4cb4-8888-5d2a450df67a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\layers">
+      <UniqueIdentifier>{dcfc38f7-9676-4a30-b29e-ac35eda2d62b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\CNN">
+      <UniqueIdentifier>{8dd2d084-572d-4383-bbcd-bb0efbcc1c38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MLP">
+      <UniqueIdentifier>{05fe535d-90bf-425e-b4ec-74e91c204b9d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -51,9 +72,6 @@
     <ClInclude Include="board.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="board_evaluator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -63,28 +81,49 @@
     <ClInclude Include="game_generator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="clipped_relu.h">
+    <ClInclude Include="nnue_linear_layer.h">
       <Filter>Header Files\NNUE</Filter>
-    </ClInclude>
-    <ClInclude Include="nnue_accumulator.h">
-      <Filter>Header Files\NNUE</Filter>
-    </ClInclude>
-    <ClInclude Include="linear_layer.h">
-      <Filter>Header Files\NNUE</Filter>
-    </ClInclude>
-    <ClInclude Include="conv_layer.h">
-      <Filter>Header Files\CNN</Filter>
     </ClInclude>
     <ClInclude Include="matrix.h">
       <Filter>Header Files\CNN</Filter>
     </ClInclude>
-    <ClInclude Include="cnn_input_layer.h">
-      <Filter>Header Files\CNN</Filter>
-    </ClInclude>
-    <ClInclude Include="cnn_linear_layer.h">
-      <Filter>Header Files\CNN</Filter>
-    </ClInclude>
     <ClInclude Include="cnn.h">
+      <Filter>Header Files\CNN</Filter>
+    </ClInclude>
+    <ClInclude Include="linear_regression.h">
+      <Filter>Header Files\linear regression</Filter>
+    </ClInclude>
+    <ClInclude Include="mcts.h">
+      <Filter>Header Files\MCTS</Filter>
+    </ClInclude>
+    <ClInclude Include="mcts_node_allocator.h">
+      <Filter>Header Files\MCTS</Filter>
+    </ClInclude>
+    <ClInclude Include="mcts_node.h">
+      <Filter>Header Files\MCTS</Filter>
+    </ClInclude>
+    <ClInclude Include="linear_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="conv_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="nnue_accumulator.h">
+      <Filter>Header Files\NNUE</Filter>
+    </ClInclude>
+    <ClInclude Include="nnue_clipped_relu.h">
+      <Filter>Header Files\NNUE</Filter>
+    </ClInclude>
+    <ClInclude Include="mlp.h">
+      <Filter>Header Files\MLP</Filter>
+    </ClInclude>
+    <ClInclude Include="board_evaluator.h">
+      <Filter>Header Files\NNUE</Filter>
+    </ClInclude>
+    <ClInclude Include="mlp_input_layer.h">
+      <Filter>Header Files\MLP</Filter>
+    </ClInclude>
+    <ClInclude Include="cnn_input_layer.h">
       <Filter>Header Files\CNN</Filter>
     </ClInclude>
   </ItemGroup>
@@ -104,9 +143,6 @@
     <ClCompile Include="board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="board_evaluator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -124,6 +160,24 @@
     </ClCompile>
     <ClCompile Include="cnn_input_layer.cpp">
       <Filter>Source Files\CNN</Filter>
+    </ClCompile>
+    <ClCompile Include="linear_regression.cpp">
+      <Filter>Source Files\linear regression</Filter>
+    </ClCompile>
+    <ClCompile Include="mcts_node_allocator.cpp">
+      <Filter>Source Files\MCTS</Filter>
+    </ClCompile>
+    <ClCompile Include="mcts.cpp">
+      <Filter>Source Files\MCTS</Filter>
+    </ClCompile>
+    <ClCompile Include="mcts_node.cpp">
+      <Filter>Source Files\MCTS</Filter>
+    </ClCompile>
+    <ClCompile Include="mlp.cpp">
+      <Filter>Source Files\MLP</Filter>
+    </ClCompile>
+    <ClCompile Include="board_evaluator.cpp">
+      <Filter>Source Files\NNUE</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,10 +1,7 @@
-#include <iostream>
 #include "board.h"
-#include <chrono>
-#include <cstring>
 #include "Search.h"
-#include "clipped_relu.h"
-#include "linear_layer.h"
+#include "nnue_clipped_relu.h"
+#include "nnue_linear_layer.h"
 #include "game_generator.h"
 #include "board_evaluator.h"
 #include "position_picker.h"
@@ -12,7 +9,11 @@
 #include "conv_layer.h"
 #include "cnn_input_layer.h"
 #include "cnn.h"
+#include "mcts.h"
 
+#include <iostream>
+#include <chrono>
+#include <cstring>
 #include <unordered_set>
 #include <algorithm>
 #include <random>
@@ -30,8 +31,8 @@ void pf(board& pos, int depth)
     }
 
     
-    uint8_t moves[board::rows * board::cols / 2];
-    std::memcpy(moves, pos.get_moves(), board::rows * board::cols / 2);
+    board::move_type moves[board::rows * board::cols / 2];
+    std::memcpy(moves, pos.get_moves(), sizeof(moves));
     int num_moves = pos.get_num_moves();
     int current_move = 0;
     while (moves[current_move] != board::passing_index)
@@ -48,158 +49,6 @@ void pf(board& pos, int depth)
     }
 }
 
-enum game_phase
-{
-    PHASE_EARLY,
-    PHASE_MID,
-    PHASE_LATE,
-    PHASE_END
-};
-
-struct masks
-{
-    bitboard m[6];
-    int indices[6][2];
-    unsigned long long score;
-};
-
-struct population
-{
-    masks ms[2000];
-};
-
-void mutate(masks& m)
-{
-    int swaps_to_make = rng::rng() % 10 + 1;
-    for (int i = 0; i < swaps_to_make; i++)
-    {
-        int mask_first = rng::rng() % 6;
-        int mask_second = rng::rng() % 6;
-        std::swap(m.indices[mask_first][rng::rng() % 2], m.indices[mask_second][rng::rng() % 2]);
-    }
-    for (int mask = 0; mask < 6; mask++)
-    {
-        m.m[mask] = 0ULL;
-        for (int index = 0; index < 2; index++)
-        {
-            if (m.indices[mask][index] == -1)
-            {
-                continue;
-            }
-            m.m[mask] |= (1ULL << m.indices[mask][index]);
-        }
-    }
-}
-
-
-
-const uint8_t get_playfield_config(const playfield_bitboard& bb, masks& m)
-{
-    bitboard combined_bb = bb.white_bb | bb.black_bb;
-    const int popcnt = __popcnt64(combined_bb);
-    int game_phase_index = 0;
-    static constexpr bitboard masks[4][6] =
-    {
-        {
-        (1ULL << 30 | 1ULL << 17 | 1ULL << 54 | 1ULL << 50),
-        (1ULL << 53 | 1ULL << 33 | 1ULL << 46 | 1ULL << 25),
-        (1ULL << 38 | 1ULL << 52 | 1ULL << 10 | 1ULL << 51),
-        (1ULL << 9 | 1ULL << 13 | 1ULL << 45),
-        (1ULL << 22 | 1ULL << 12 | 1ULL << 11 | 1ULL << 41),
-        (1ULL << 14 | 1ULL << 49 | 1ULL << 18)
-        },
-        {
-        (1ULL << 0 | 1ULL << 63 | 1ULL << 51 | 1ULL << 5),
-        (1ULL << 14 | 1ULL << 7 | 1ULL << 4 | 1ULL << 23),
-        (1ULL << 32 | 1ULL << 39 | 1ULL << 31 | 1ULL << 24),
-        (1ULL << 47 | 1ULL << 54 | 1ULL << 53 | 1ULL << 52),
-        (1ULL << 3 | 1ULL << 9 | 1ULL << 16 | 1ULL << 2),
-        (1ULL << 50 | 1ULL << 56 | 1ULL << 40 | 1ULL << 49)
-        },
-        {
-        (1ULL << 57 | 1ULL << 56),
-        (1ULL << 15 | 1ULL << 7),
-        (1ULL << 8 | 1ULL << 1),
-        (1ULL << 62 | 1ULL << 55),
-        (1ULL << 63 | 1ULL << 48),
-        (1ULL << 6 | 1ULL << 0)
-        },
-        {
-        (1ULL << 55 | 1ULL << 1),
-        (1ULL << 48 | 1ULL << 63),
-        (1ULL << 7 | 1ULL << 15),
-        (1ULL << 0 | 1ULL << 8),
-        (1ULL << 57 | 1ULL << 56),
-        (1ULL << 62 | 1ULL << 6)
-        }
-    };
-    game_phase phase = PHASE_EARLY;
-    if (popcnt >= 49)
-    {
-        game_phase_index = 64 * 3;
-        phase = PHASE_END;
-        //return 0;
-    }
-    else if (popcnt >= 34)
-    {
-        game_phase_index = 64 * 2;
-        phase = PHASE_LATE;
-        uint8_t result = 0;
-        for (int bit_index = 0; bit_index < 6; bit_index++)
-        {
-            if ((combined_bb & masks[phase][bit_index]))
-            {
-                result |= (1 << bit_index);
-            }
-        }
-        return result + game_phase_index;
-    }
-    else if (popcnt >= 19)
-    {
-        game_phase_index = 64 * 1;
-        phase = PHASE_MID;
-        uint8_t result = 0;
-        for (int bit_index = 0; bit_index < 6; bit_index++)
-        {
-            if ((combined_bb & masks[phase][bit_index]))
-            {
-                result |= (1 << bit_index);
-            }
-        }
-        return result + game_phase_index;
-    }
-    else
-    {
-        game_phase phase = PHASE_EARLY;
-        uint8_t result = 0;
-        for (int bit_index = 0; bit_index < 6; bit_index++)
-        {
-            if ((combined_bb & masks[phase][bit_index]))
-            {
-                result |= (1 << bit_index);
-            }
-        }
-        return result;
-    }
-    
-    uint8_t result = 0;
-    combined_bb = ~combined_bb;
-    for (int bit_index = 0; bit_index < 6; bit_index++)
-    {
-        //print_bitboard(masks[bit_index]);
-        //std::cout << m.m[bit_index] << "\n";
-        if ((combined_bb & m.m[bit_index]))
-        {
-            result |= (1 << bit_index);
-            //std::cout << "yes\n";
-        }
-        else
-        {
-            //std::cout << "no\n";
-        }
-    }
-    return game_phase_index + result;
-}
 
 
 unsigned long long best_score = 10000000000;
@@ -316,8 +165,6 @@ void check_configs(int max_ply = 100)
     std::cout << "\n";
 }
 
-int xd = 0;
-
 void speed_test()
 {
     for (int game = 0; game < 25000; game++)
@@ -326,7 +173,9 @@ void speed_test()
         while (!pos.is_over())
         {
             pos.do_random_move();
+#if use_nnue
             xd += NN::be.evaluate(pos);
+#endif
         }
         pos.new_game();
     }
@@ -337,17 +186,18 @@ void speed_test()
 #include "move_picker.h"
 void tune_move_ordering()
 {
-    std::pair<int,int> vals[100][65];
-    std::pair<int, int> configs_moves[256][65];
-    std::memset(vals, 0, sizeof(vals));
+    static constexpr int max_ply = board::max_ply;
+    static constexpr int total_moves = board::passing_index + 1;
+    static constexpr int num_configs = 256;
+    std::pair<int,int> move_probabilities[max_ply][total_moves];
+    std::pair<int, int> configs_moves[num_configs][total_moves];
+    std::memset(move_probabilities, 0, sizeof(move_probabilities));
     std::memset(configs_moves, 0, sizeof(configs_moves));
     board b;
     
-    std::unordered_map<int, win_pct> scores;
     auto start = high_resolution_clock::now();
     search::search_info s;
     s.eval_function = evaluate;
-    s.time = search::max_time;
     for (int i = 0; i < 30000; i++)
     {
         if (!(i % 100))
@@ -363,11 +213,11 @@ void tune_move_ordering()
             int score;
             
             
-            auto move = search::search_move(b, 6, false, score, s);
+            auto move = search::search_move(b, 4, false, score, s);
             const auto config = b.get_playfield_config();
 
-
-            vals[b.get_ply()][move].first++;
+             
+            move_probabilities[b.get_ply()][move].first++;
             configs_moves[config][move].first++;
 
             move_picker mp(b);
@@ -375,13 +225,13 @@ void tune_move_ordering()
             while (mp.get_move_count())
             {
                 const auto current_move = mp.get_move();
-                vals[b.get_ply()][move].second++;
-                configs_moves[config][move].second++;
-
                 if (mp.get_move_count() && (current_move == board::passing_index))
                 {
                     break;
                 }
+                
+                move_probabilities[b.get_ply()][current_move].second++;
+                configs_moves[config][current_move].second++;
             }
             b.do_random_move();
         }
@@ -393,7 +243,7 @@ void tune_move_ordering()
         std::cout << "{";
         for (int move = 0; move < 65; move++)
         {
-            float result = vals[ply][move].second != 0 ? (float)vals[ply][move].first / vals[ply][move].second : 0;
+            float result = move_probabilities[ply][move].second != 0 ? (float)move_probabilities[ply][move].first / move_probabilities[ply][move].second : 0;
             std::cout << result <<  ", ";
         }
         std::cout << "},\n";
@@ -411,188 +261,38 @@ void tune_move_ordering()
     }
     
 }
-
-
-
+#include "linear_regression.h"
+#include "mlp.h"
+//reads an .sinput file and outputs the evaluation 
+void test_evaluation(std::string filename)
+{
+    std::ifstream games_file(filename, std::ios::binary);
+    for (int game = 0; game < 100; game++)
+    {
+        playfield_bitboard curr_bb;
+        games_file.read((char*)&curr_bb, sizeof(bitboard) * 2);
+        board b;
+        b.set_board_state(curr_bb);
+        //b.print_board();
+        int16_t score;
+        games_file.read((char*)&score, sizeof(int16_t));
+        std::cout <<"test " <<  evaluate(b) << " " << score << "\n";
+    }
+}
 
 int main()
 {
     search::init();
     board b;
     CNN::cnn network;
-    network.evaluate(b);
-    /*CNN::cnn_input_layer layer;
-    b.do_random_move();
-    b.do_random_move();
-    b.do_random_move();
-    b.do_random_move();
-    b.do_random_move();
-    b.print_board();
-    layer.prepare_output(b);*/
-    /*std::string filename;
-    std::cout << "please enter the filename to convert\n";
-    std::cin >> filename;
-    game_generator gg;
-    gg.convert_to_input_type(filename);
-    return 0;*/
-    /*matrix<8, 8> input[5];
-    for (int row = 0; row < 8; row++)
-    {
-        for (int col = 0; col < 8; col++)
-        {
-            for (int channel = 0; channel < 5; channel++) 
-            {
-                input[channel](row, col) = 1.0f;
-            }
-        }
-    }
-    conv_layer<8, 8, 5, 4, 4, 5, 5, 8, 1, 2, 1, 2, true> l;
-    const auto& ret = l.forward(input);
-    for (int output_channel = 0; output_channel < 8; output_channel++)
-    {
-        for (int row = 0; row < 8; row++)
-        {
-            for (int col = 0; col < 8; col++)
-            {
-                std::cout << "[" << std::setw(2) <<  ret[output_channel](row, col) << "]";
-            }
-            std::cout << "\n";
-        }
-        std::cout << "\n\n";
-    }
-    for (int neuron = 0; neuron < 8 * 8 * 5; neuron++)
-    {
-        std::cout << l.flatten()[neuron] << " ";
-    }
-    return 0;*/
-    //gg.convert_to_input_type("games1.sbin");
-    //NN::be.test();
-    //check_configs();
-    //tune_move_ordering();
+    linear_regression::load_weights();
+
+    auto start_perft = high_resolution_clock::now();
+    pf(b, 12);
+    auto stop_perft = high_resolution_clock::now();
+    auto duration_perft = duration_cast<microseconds>(stop_perft - start_perft);
+    std::cout << "perft " << (((float)duration_perft.count() + 1) / 1000000) << "\n\n";
     cmd::loop();
-    //std::cout << (-127 >> 1);
-
-
-    for (const auto square : { 0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27 })
-    {
-        int square_corrected = square ^ 63;
-        std::cout << "square " << square << " has symmetries :";
-        for (int symmetry = 0; symmetry < SYMMETRY_NONE; symmetry++)
-        {
-            std::cout << board_indices_vertical_mirror[symmetry][square_corrected] << " ";
-        }
-        std::cout << "\n";
-    }
-
-    int wins = 0;
-    int draws = 0;
-    int loses = 0;
-
-    //check_configs();
-    
-    unsigned long long best_score = 100000000000000;
-    int best_masks[6][4];
-    std::random_device rd;
-    std::mt19937 g(rd());
-    //constants
-
-
-	auto start = high_resolution_clock::now();
-	//board b;
-	search::search_info nnue_search_info;
-    nnue_search_info.eval_function = evaluate;
-    nnue_search_info.time = 10000;
-
-    search::search_info classical_search_info;
-    classical_search_info.eval_function = evaluate_classical;
-    classical_search_info.time = 10000;
-
-    speed_test();
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";
-    std::cout << xd << "\n";
-
-	for (int i = 0; i < 0; i++)
-    {
-       nnue_search_info.time = 100000;
-       classical_search_info.time = 200000;
-       if (!(i % 10))
-       {
-           std::cout << i << "\n";
-           std::cout << wins << "/" << draws << "/" << loses << "\n\n";
-           auto stop = high_resolution_clock::now();
-           auto duration = duration_cast<microseconds>(stop - start);
-           std::cout << (((float)duration.count() + 1) / 1000000) << "\n\n";
-       }
-       std::vector<scored_move> m;
-       while (!b.is_over())
-       {
-           int x;
-           int score;
-           scored_move curr_scored_move;
-           if (b.get_side_to_move() == COLOR_WHITE)
-           {
-               if (b.get_ply() <= 9)
-               {
-                   b.do_random_move();
-               }
-               else if (b.get_ply() > -9)// && (b.get_ply() < 0) || (rng::rng()%10))
-               {
-                   search::transposition_table.clear();
-                   int move = search::search_move(b, 666, false, score, classical_search_info);
-                   b.do_move(move);
-               }
-        
-           }
-           else
-           {
-               if (b.get_ply() <= 9)
-               {
-                   b.do_random_move();
-               }
-               else if (b.get_ply() > -9)// && (b.get_ply() < 0) || (rng::rng()%10))
-               {
-                   search::transposition_table.clear();
-                   int move = search::search_move(b, 666, false, score, nnue_search_info);
-                   b.do_move(move);
-               }
-           }
-       }
-       int result = 0;
-       if (b.get_score() < 0)
-       {
-           wins += 1;
-           result = -1;
-       }
-       else if (b.get_score() > 0)
-       {
-           loses += 1;
-           result = 1;
-       }
-       else
-       {
-           draws += 1;
-           result = 0;
-       }
-
-       b.new_game();
-    }
-
-    //generate_book();
-
-
-
-
-    
-	std::cout << wins << "/" << draws << "/" << loses << "\n\n";
-    //for (int i = 0; i < 1; i++)
-    //{
-    //    auto games = gg.generate_games(false, true, 1, 2);
-    //    auto filename = gg.save_to_file(games);
-    //    //gg.convert_to_input_type(filename);
-    //}
-
 }   
     
     //int configs[256];

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "mcts.h"
 #include "Search.h"
 namespace cmd
 {
@@ -36,7 +37,7 @@ namespace cmd
 			search::search_info s;
 			s.eval_function = evaluate;
 			s.time = time;
-			const auto move = search::search_move(rootPos, depth, true, score, s);
+			const auto move = search::search_move(rootPos,depth,true,score,s);
 			std::cout << "bestmove " << move << " " << "value " << score << std::endl;
 
 		}

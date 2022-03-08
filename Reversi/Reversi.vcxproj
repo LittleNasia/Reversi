@@ -22,16 +22,22 @@
     <ClInclude Include="bit_utilities.h" />
     <ClInclude Include="board.h" />
     <ClInclude Include="board_evaluator.h" />
-    <ClInclude Include="clipped_relu.h" />
+    <ClInclude Include="mlp_input_layer.h" />
+    <ClInclude Include="nnue_clipped_relu.h" />
     <ClInclude Include="cmd.h" />
     <ClInclude Include="cnn.h" />
     <ClInclude Include="cnn_input_layer.h" />
-    <ClInclude Include="cnn_linear_layer.h" />
+    <ClInclude Include="linear_layer.h" />
     <ClInclude Include="conv_layer.h" />
     <ClInclude Include="evaluate.h" />
     <ClInclude Include="game_generator.h" />
-    <ClInclude Include="linear_layer.h" />
+    <ClInclude Include="nnue_linear_layer.h" />
+    <ClInclude Include="linear_regression.h" />
     <ClInclude Include="matrix.h" />
+    <ClInclude Include="mcts.h" />
+    <ClInclude Include="mcts_node.h" />
+    <ClInclude Include="mcts_node_allocator.h" />
+    <ClInclude Include="mlp.h" />
     <ClInclude Include="move_picker.h" />
     <ClInclude Include="nnue_accumulator.h" />
     <ClInclude Include="position_picker.h" />
@@ -46,6 +52,11 @@
     <ClCompile Include="cnn_input_layer.cpp" />
     <ClCompile Include="evaluate.cpp" />
     <ClCompile Include="game_generator.cpp" />
+    <ClCompile Include="linear_regression.cpp" />
+    <ClCompile Include="mcts.cpp" />
+    <ClCompile Include="mcts_node.cpp" />
+    <ClCompile Include="mcts_node_allocator.cpp" />
+    <ClCompile Include="mlp.cpp" />
     <ClCompile Include="move_picker.cpp" />
     <ClCompile Include="nnue_accumulator.cpp" />
     <ClCompile Include="position_picker.cpp" />
@@ -182,6 +193,8 @@
       <Optimization>MaxSpeed</Optimization>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <CallingConvention>Cdecl</CallingConvention>
+      <AdditionalOptions>/USEPROFILE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

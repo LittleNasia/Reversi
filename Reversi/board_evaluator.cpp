@@ -1,9 +1,10 @@
 #include "board_evaluator.h"
 #include <fstream>
-
+#if use_nnue
 NN::board_evaluator::board_evaluator()
 {
-	std::ifstream input("C:/Users/Anastazja/reversi.nnue", std::ios::binary);
+
+	std::ifstream input("256x128_32_32_32_1.nnue", std::ios::binary);
 	float accumulator_weights[layer_sizes[0]][layer_sizes[1]];
 	float layer_1_weights[layer_sizes[1]][layer_sizes[2]];
 	float layer_2_weights[layer_sizes[2]][layer_sizes[3]];
@@ -26,6 +27,7 @@ NN::board_evaluator::board_evaluator()
 	layer_2.read_weights((float*)layer_1_weights, (float*)layer_1_biases);
 	layer_3.read_weights((float*)layer_2_weights, (float*)layer_2_biases);
 	layer_output.read_weights((float*)layer_3_weights, (float*)layer_3_biases);
+
 }
 
 void NN::board_evaluator::test()
@@ -79,9 +81,9 @@ void NN::board_evaluator::test()
 
 
 
-	for (auto& val : input)
+	for (int i = 0; i < num_features/2; i++)
 	{
-		val = 1;
+		input[i]  = 1;
 	}
 	//simple forward pass
 	acc.recompute_acc(input);
@@ -122,6 +124,7 @@ void NN::board_evaluator::test()
 
 	layer_output.forward(ReLU_layer_3.output);
 	std::cout << "\n\nones " << (float)layer_output.output[0]/127 << "\n";
+
 }
 
 int NN::board_evaluator::evaluate(const board& b)
@@ -151,5 +154,9 @@ int NN::board_evaluator::evaluate(const board& b)
 	layer_3.forward(ReLU_layer_2.output);
 	ReLU_layer_3.forward(layer_3.output);
 	layer_output.forward(ReLU_layer_3.output);
-	return std::tanh((float)layer_output.output[0]/127) * 1000;
+	return std::tanh((float)layer_output.output[0]/input_scaling_factor) * 100;
+	return 0;
 }
+
+
+#endif

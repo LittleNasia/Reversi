@@ -8,6 +8,13 @@ using bitboard = uint64_t;
 constexpr int board_rows = 8;
 constexpr int board_cols = 8;
 
+inline const int pop_bit(bitboard& bb)
+{
+	int index = _lzcnt_u64(bb) ^ 63;
+	bb ^= (1ULL << index);
+	return index;
+}
+
 inline constexpr bitboard up(const bitboard b)
 {
 	return  b << 8;

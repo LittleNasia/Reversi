@@ -157,7 +157,8 @@ namespace search
 		//reverse futility pruning
 		//speeds up the search but doesn't impact the result in any meaningful way
 		if (
-			(depth <= 6)
+			
+			&& (depth <= 6)
 			&& (eval - reverse_futility_margin * depth >= beta)
 			&& (std::abs(beta) < value_win)
 		   )

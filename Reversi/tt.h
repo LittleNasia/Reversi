@@ -23,7 +23,7 @@ struct bucket
 class tt
 {
 public:
-	constexpr static unsigned int size = 2<<20;
+	constexpr static unsigned int size = 2<<21;
 	void clear();
 	void store(const tt_entry& entry, bool always_replace = false);
 	const tt_entry& get(const tt_entry& entry, bool& found);

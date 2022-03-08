@@ -3,6 +3,9 @@
 #include <fstream>
 
 #include "matrix.h"
+namespace CNN
+{
+
 
 template <int input_rows, int input_cols, int input_channels,
 	int filter_rows, int filter_cols, 
@@ -21,16 +24,16 @@ public:
 	using weights_matrix = matrix<filter_rows, filter_cols>;
 
 private:
-	alignas(64)output_type m_output[output_channels];
-	alignas(64)weights_matrix m_filters[input_channels][output_channels];
-	alignas(64)float m_biases[output_channels];
-	alignas(64)output_type_flattened m_flattened_output;
+	alignas(128) output_type m_output[output_channels];
+	alignas(128) weights_matrix m_filters[input_channels][output_channels];
+	alignas(128) float m_biases[output_channels];
+	alignas(128) output_type_flattened m_flattened_output;
 
 	//bias templates are used because of the padding
 	//instead of calculating which index doesn't belong to the zero padding every time forward pass is run (and so bias isn't added there)
 	//we can just calculate that once, and then just memcpy the result at the begining of each forward pass
-	alignas(64)output_type m_output_bias_template[output_channels];
-	alignas(64)output_type_flattened m_flattened_output_bias_template;
+	alignas(128) output_type m_output_bias_template[output_channels];
+	alignas(128) output_type_flattened m_flattened_output_bias_template;
 
 public:
 	const output_type* getOutput() const
@@ -43,22 +46,43 @@ public:
 		return m_flattened_output;
 	}
 
-	conv_layer()
+	void print_output()
 	{
-		for (int input_channel = 0; input_channel < input_channels; input_channel++)
+		for (int output_channel = 0; output_channel < 6; output_channel++)
 		{
-			for (int output_channel = 0; output_channel < output_channels; output_channel++)
+			for (int row = 0; row < 8; row++)
 			{
-				for (int filter_row = 0; filter_row < filter_rows; filter_row++)
+				for (int col = 0; col < 8; col++)
 				{
-					for (int filter_col = 0; filter_col < filter_cols; filter_col++)
+					std::cout << "[" << m_output[output_channel](row, col) << "]";
+				}
+				std::cout << "\n";
+			}
+			std::cout << "\n\n";
+		}
+		std::cout << "\n\n\n";
+	}
+
+	void load_weights(float* weights, float* biases)
+	{
+		for (int filter_row = 0, index =0; filter_row < filter_rows; filter_row++)
+		{
+			for (int filter_col = 0; filter_col < filter_cols; filter_col++)
+			{
+				for (int input_channel = 0; input_channel < input_channels; input_channel++)
+				{
+					for (int output_channel = 0; output_channel < output_channels; output_channel++, index++)
 					{
-						m_filters[input_channel][output_channel](filter_row, filter_col) = 0.01f;
+						m_filters[input_channel][output_channel](filter_row, filter_col) = weights[index];
 					}
 				}
-				m_biases[output_channel] = 0.01f;
 			}
 		}
+		for (int output_channel = 0,index=0; output_channel < output_channels; output_channel++, index++)
+		{
+			m_biases[output_channel] = biases[index];
+		}
+
 
 		std::memset(m_flattened_output_bias_template, 0, sizeof(m_flattened_output_bias_template));
 		std::memset(&m_output_bias_template, 0, sizeof(m_output_bias_template));
@@ -76,41 +100,29 @@ public:
 						const int output_row_index = output_row + top_row_padding;
 						const int output_col_index = output_col + left_col_padding;
 
+						
 						m_output_bias_template[output_channel](output_row_index, output_col_index) = m_biases[output_channel];
 
 						const int flattened_output_index = output_channel +
-							output_col_index * output_channels +
-							output_row_index * padded_output_cols * output_channels;
+							(output_col + left_col_padding) * output_channels +
+							(output_row + top_row_padding) * padded_output_cols * output_channels;
 
 						m_flattened_output_bias_template[flattened_output_index] = m_biases[output_channel];
 					}
 				}
 			}
 		}
+	}
+
+	conv_layer()
+	{
+	    
+		
 
 	}
 	conv_layer(std::ifstream& weightsFile)
 	{
 		
-		/*m_activation_function_flattened = [&](output_type_flattened& matrix) {for (auto& val : matrix.reshaped())
-		{
-			val = val > 0 ? val : 0;
-		}
-		};
-		for (int filter_row = 0; filter_row < filter_rows; filter_row++)
-		{
-			for (int filter_col = 0; filter_col < filter_cols; filter_col++)
-			{
-				for (int input_channel = 0; input_channel < input_channels; input_channel++)
-				{
-					for (int output_channel = 0; output_channel < output_channels; output_channel++)
-					{
-						weightsFile.read((char*)&m_filters[input_channel][output_channel](filter_row, filter_col), sizeof(float));
-					}
-				}
-			}
-		}
-		weightsFile.read((char*)m_biases, output_channels * sizeof(float));*/
 	}
 
 	const output_type* forward(const input_type* input)
@@ -123,14 +135,12 @@ public:
 		{
 			auto& curr_output = m_output[output_channel];
 			//we can just set the entire layer to be equal to the bias template
-			if (!is_flattened)
-				std::memcpy(&m_output[output_channel], &m_output_bias_template[output_channel], sizeof(m_output_bias_template[output_channel]));
+			std::memcpy(&m_output[output_channel], &m_output_bias_template[output_channel], sizeof(m_output[output_channel]));
 
 			for (int input_channel = 0; input_channel < input_channels; input_channel++)
 			{
 				const auto& curr_input = input[input_channel];
 				const auto& curr_filter = m_filters[input_channel][output_channel];
-
 				
 				for (int filter_row = 0; filter_row < filter_rows; filter_row++)
 				{
@@ -149,8 +159,10 @@ public:
 							// don't forget the output is zero-padded to make sure input and output dimensions are identical
 							const int output_row_index = output_row + top_row_padding;
 							const int output_col_index = output_col + left_col_padding;
+							//std::cout << output_row_index << " " << output_row + filter_row << "\n";
 							// multiplies the row of the weight matrix with corresponding input slice and sums the result
-							const float&& sum = dot_prod(curr_filter_row, curr_input, output_row, output_col);
+							const float&& sum= dot_prod(curr_filter_row, curr_input, output_row + filter_row, output_col);
+							//std::cout << sum << "\n";
 							if(!is_flattened)
 								curr_output(output_row_index, output_col_index) += sum;
 							else
@@ -161,10 +173,10 @@ public:
 								// 3. output_channel
 								//however, our order is different, and so we can't just do index++ in the innermost loop
 								//this is due to how tensorflow works
-								//this index calculation is made to make sure it is compatible with it
+ 								//this index calculation is made to make sure it is compatible with it
 								const int flattened_output_index = output_channel +
-										output_col_index * output_channels +
-										output_row_index * padded_output_cols * output_channels;
+									(output_col + left_col_padding) * output_channels +
+									(output_row + top_row_padding) * padded_output_cols * output_channels;
 								m_flattened_output[flattened_output_index] += sum;
 							}
 							
@@ -173,10 +185,40 @@ public:
 
 				}
 			}
-			//apply relu to the current output channel as its value is final
-			for (auto& val : curr_output)
+
+
+			
+			/*for (int input_channel = 0; input_channel < input_channels; input_channel++)
 			{
-				val = val > 0 ? val : 0;
+				for (int output_row = 0; output_row < output_rows; output_row++)
+				{
+					for (int output_col = 0; output_col < output_cols; output_col++)
+					{
+						float sum = dot_prod_naive(m_filters[input_channel][output_channel], input[input_channel], output_row, output_col);
+						m_output[output_channel](output_row + top_row_padding, output_col + left_col_padding)
+							+= sum;
+						if (is_flattened)
+						{
+							const int flattened_output_index = output_channel +
+								(output_col + top_row_padding) * output_channels +
+								(output_row + left_col_padding) * padded_output_cols * output_channels;
+							m_flattened_output[flattened_output_index] += sum;
+						}
+						
+					}
+				}
+			}*/
+
+			//apply relu to the current output channel as its value is final
+			for (int output_col = 0; output_col < padded_output_cols; output_col++)
+			{
+				for (int output_row= 0; output_row < padded_output_rows; output_row++)
+				{
+					if (curr_output(output_col, output_row) < 0)
+					{
+						curr_output(output_col, output_row) = 0;
+					}
+				}
 			}
 		}
 		
@@ -195,10 +237,23 @@ public:
 		return m_output;
 	}
 
-	inline constexpr float dot_prod(const float* filter, const input_type input, int row, int col)
+	inline constexpr float dot_prod_naive(const matrix<4, 4>& filter, const input_type& input, int row, int col)
+	{
+		float sum = 0;
+		for (int filter_row = 0; filter_row < filter_rows; filter_row++)
+		{
+			for (int filter_col = 0; filter_col < filter_cols; filter_col++)
+			{
+				sum += input(row + filter_row, col + filter_col) * filter(filter_row, filter_col);
+			}
+		}
+		return sum;
+	}
+
+	inline constexpr float dot_prod(const float* filter, const input_type& input, int row, int col)
 	{
 		const __m128 filter_row = _mm_load_ps(filter);
-		const __m128 input_part = _mm_load_ps(&input(row, col));
+		const __m128 input_part = _mm_loadu_ps(&input(row, col));
 
 		__m128 elementwise_mul_result = _mm_mul_ps(filter_row, input_part);
 
@@ -220,3 +275,5 @@ public:
 
 
 };
+
+}

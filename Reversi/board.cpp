@@ -60,22 +60,18 @@ void board::new_game()
 	side_to_move = COLOR_BLACK;
 	bb.black_bb = 0 | (1ULL << to_1d(3, 3)) | (1ULL << to_1d(4, 4));
 	bb.white_bb = 0 | (1ULL << to_1d(3, 4)) | (1ULL << to_1d(4, 3));
-	first_moves.black_bb = 0ULL;
-	first_moves.white_bb = 0ULL;
 	ply = 0;
 	forced_passes = 0;
 	result = COLOR_NONE;
-	move_history[ply].first_moves = first_moves;
 	move_history[ply].bb.white_bb = bb.white_bb;
 	move_history[ply].bb.black_bb = bb.black_bb;
 	//std::cout << bb.white_bb << "\n";
 	//std::cout << bb.black_bb << "\n";
 	move_history[ply].forced_passes = 0;
-	if (use_nnue)
-	{
-		accumulator_history[0].reset();
-		accumulator_history[0].refresh(bb.white_bb, bb.black_bb, 0);
-	}
+#if use_nnue 
+	accumulator_history[0].reset();
+	accumulator_history[0].refresh(bb.white_bb, bb.black_bb, 0);
+#endif
 }
 
 const board::move_type* board::get_moves()
@@ -239,18 +235,20 @@ void board::capture(const uint8_t move, const bool update_accumulator)
 				}
 			}
 		}
-		if (use_nnue)
+#if use_nnue
 			//std::cout << "victims " << victims << "\n";
 			//accumulator_history[ply].refresh(bb.white_bb, bb.black_bb, get_playfield_config());
 			accumulator_history[ply].update_accumulator(accumulator_history[ply - 1], total_victims | (1ULL << move), total_victims, side_to_move, *this);
+#endif
 		move_history[ply].forced_passes = 0;
 	}
 	else
 	{
 		forced_passes++;
 		move_history[ply].forced_passes = forced_passes;
-		if (use_nnue)
+#if use_nnue
 			accumulator_history[ply].update_accumulator(accumulator_history[ply - 1], 0, 0, side_to_move, *this, true);
+#endif
 		
 	}
 	side_to_move = side_to_move == COLOR_WHITE ? COLOR_BLACK : COLOR_WHITE;
@@ -419,4 +417,33 @@ const uint8_t board::get_playfield_config() const
 		}
 	}
 	return game_phase_index + result;
+}
+
+
+void board::set_board_state(const playfield_bitboard& target_bb)
+{
+	//we can just assume that the current side to move is black, it could be wrong but it absolutely does not matter when it comes to the game state
+	side_to_move = COLOR_BLACK;
+
+	//target_bb's "white"_bb is actually just side to move
+	//this makes no sense but that's just a quirk of side_to_move perspective neural network inputs
+	bb.black_bb = target_bb.white_bb;
+	bb.white_bb = target_bb.black_bb;
+
+
+
+	//set ply to 0
+	ply = 0;
+
+	move_history[ply].bb.white_bb = bb.white_bb;
+	move_history[ply].bb.black_bb = bb.black_bb;
+	//std::cout << bb.white_bb << "\n";
+	//std::cout << bb.black_bb << "\n";
+	move_history[ply].forced_passes = 0;
+
+#if use_nnue
+	{
+		accumulator_history[ply].refresh(bb.white_bb, bb.black_bb, get_playfield_config());
+	}
+#endif
 }

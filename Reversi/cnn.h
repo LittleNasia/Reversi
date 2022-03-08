@@ -2,8 +2,9 @@
 #include "board.h"
 #include "conv_layer.h"
 #include "cnn_input_layer.h"
-#include "cnn_linear_layer.h"
+#include "linear_layer.h"
 
+#include <fstream>
 namespace CNN
 {
 	constexpr int num_layers = 5;
@@ -26,22 +27,6 @@ namespace CNN
 		OUTPUT_LAYER = SECOND_DENSE_LAYER
 	};
 
-	enum conv_layer_features
-	{
-		CONV_INPUT_ROWS,
-		CONV_INPUT_COLS,
-		CONV_INPUT_CHANNELS,
-		CONV_FILTER_ROWS,
-		CONV_FILTER_COLS,
-		CONV_OUTPUT_ROWS,
-		CONV_OUTPUT_COLS,
-		CONV_OUTPUT_CHANNELS,
-		CONV_LEFT_COL_PADDING,
-		CONV_RIGHT_COL_PADDING,
-		CONV_TOP_ROW_PADDING,
-		CONV_BOTTOM_ROW_PADDING,
-		CONV_IS_FLATTENED
-	};
 
 	struct conv_layer_info
 	{
@@ -171,7 +156,56 @@ namespace CNN
 	class cnn
 	{
 	public:
-		cnn() :output_layer(false) {}
+		cnn() :output_layer(false) 
+		{
+			std::ifstream weights_file("64c_64c_64c_128_1.cnn", std::ios::binary);
+
+			float first_conv_layer_weights[conv_layers_info[FIRST_CONV_LAYER].filter_rows][conv_layers_info[FIRST_CONV_LAYER].filter_cols]
+				[conv_layers_info[FIRST_CONV_LAYER].input_channels][conv_layers_info[FIRST_CONV_LAYER].output_channels];
+			float first_conv_layer_biases[conv_layers_info[FIRST_CONV_LAYER].output_channels];
+
+			float second_conv_layer_weights[conv_layers_info[SECOND_CONV_LAYER].filter_rows][conv_layers_info[SECOND_CONV_LAYER].filter_cols]
+				[conv_layers_info[SECOND_CONV_LAYER].input_channels][conv_layers_info[SECOND_CONV_LAYER].output_channels];
+			float second_conv_layer_biases[conv_layers_info[SECOND_CONV_LAYER].output_channels];
+
+			float third_conv_layer_weights[conv_layers_info[THIRD_CONV_LAYER].filter_rows][conv_layers_info[THIRD_CONV_LAYER].filter_cols]
+				[conv_layers_info[THIRD_CONV_LAYER].input_channels][conv_layers_info[THIRD_CONV_LAYER].output_channels];
+			float third_conv_layer_biases[conv_layers_info[THIRD_CONV_LAYER].output_channels];
+
+
+			weights_file.read((char*)first_conv_layer_weights, sizeof(first_conv_layer_weights));
+			weights_file.read((char*)first_conv_layer_biases, sizeof(first_conv_layer_biases));
+			first_conv_layer.load_weights((float*)first_conv_layer_weights, first_conv_layer_biases);
+
+
+			weights_file.read((char*)second_conv_layer_weights, sizeof(second_conv_layer_weights));
+			weights_file.read((char*)second_conv_layer_biases, sizeof(second_conv_layer_biases));
+			second_conv_layer.load_weights((float*)second_conv_layer_weights, second_conv_layer_biases);
+
+
+			weights_file.read((char*)third_conv_layer_weights, sizeof(third_conv_layer_weights));
+			weights_file.read((char*)third_conv_layer_biases, sizeof(third_conv_layer_biases));
+			third_conv_layer.load_weights((float*)third_conv_layer_weights, third_conv_layer_biases);
+
+
+			float first_dense_layer_weights[third_conv_layer_type::flattened_output_size][dense_layer_sizes[FIRST_DENSE_LAYER]];
+			float first_dense_layer_biases[dense_layer_sizes[FIRST_DENSE_LAYER]];
+
+			float second_dense_layer_weights[dense_layer_sizes[FIRST_DENSE_LAYER]][dense_layer_sizes[SECOND_DENSE_LAYER]];
+			float second_dense_layer_biases[dense_layer_sizes[SECOND_DENSE_LAYER]];
+
+			weights_file.read((char*)first_dense_layer_weights, sizeof(first_dense_layer_weights));
+			weights_file.read((char*)first_dense_layer_biases, sizeof(first_dense_layer_biases));
+			fully_connected_layer.load_weights((float*)first_dense_layer_weights, first_dense_layer_biases);
+
+
+			weights_file.read((char*)second_dense_layer_weights, sizeof(second_dense_layer_weights));
+			weights_file.read((char*)second_dense_layer_biases, sizeof(second_dense_layer_biases));
+			output_layer.load_weights((float*)second_dense_layer_weights, second_dense_layer_biases);
+
+
+			weights_file.close();
+		}
 		using first_conv_layer_type = conv_layer<
 			conv_layers_info[FIRST_CONV_LAYER].input_rows,
 			conv_layers_info[FIRST_CONV_LAYER].input_cols,
@@ -220,23 +254,25 @@ namespace CNN
 			conv_layers_info[THIRD_CONV_LAYER].is_flattened
 		>;
 
-		using first_dense_layer_type = cnn_linear_layer<third_conv_layer_type::flattened_output_size, dense_layer_sizes[FIRST_DENSE_LAYER]>;
-		using second_dense_layer_type = cnn_linear_layer<dense_layer_sizes[FIRST_DENSE_LAYER], dense_layer_sizes[SECOND_DENSE_LAYER]>;
+		using first_dense_layer_type = linear_layer<third_conv_layer_type::flattened_output_size, dense_layer_sizes[FIRST_DENSE_LAYER]>;
+		using second_dense_layer_type = linear_layer<dense_layer_sizes[FIRST_DENSE_LAYER], dense_layer_sizes[SECOND_DENSE_LAYER]>;
 
 		float evaluate(const board& b)
 		{
 			const auto& conv_input = input.prepare_output(b);
 			//simple forward pass
+
 			const auto& first_conv_layer_output = first_conv_layer.forward(conv_input);
 			const auto& second_conv_layer_output = second_conv_layer.forward(first_conv_layer_output);
 			const auto& third_conv_layer_output = third_conv_layer.forward(second_conv_layer_output);
 			const auto& third_conv_layer_flattened_output = third_conv_layer.flatten();
+
 			const auto& fully_connected_layer_output = fully_connected_layer.forward(third_conv_layer_flattened_output);
 			const auto& final_layer_output = output_layer.forward(fully_connected_layer_output);
-
-			std::cout << std::tanh(*final_layer_output) << "\n";
 			return std::tanh(*final_layer_output);
 		}
+
+		
 
 	private:
 		cnn_input_layer input;
