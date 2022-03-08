@@ -1,6 +1,9 @@
-Beginings of a Reversi game engine, with planned neural network support 
-
-not really serious, just a for fun thingie
+Beginings of a Reversi game engine, with neural network support using the following algorithms:
+- Hand Crafted Evaluation
+- Multi layer perceptron
+- Convolutional neural networks
+- NNUE
+- Piece-square tables learned using linear-regression
 
 ### Algorithms used:
 
