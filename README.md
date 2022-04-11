@@ -1,6 +1,9 @@
-Beginings of a Reversi game engine, with planned neural network support 
-
-not really serious, just a for fun thingie
+Beginings of a Reversi game engine, with neural network support using the following algorithms:
+- Hand Crafted Evaluation
+- Multi layer perceptron
+- Convolutional neural networks
+- NNUE
+- Piece-square tables learned using linear-regression
 
 ### Algorithms used:
 
@@ -20,12 +23,12 @@ In search:
 
 Code uses SSE4.2 intrinsics and below (mainly POPCNT, LZCNT for bitboard serialization, and vector integer operations to vectorize the NN operations). As such, it won't run on machines that do not contain the necessary instruction sets. However, CPUs that do not are really rare nowadays. There is no AVX used (I saw the move I just didn't like it). 
 
-Evaluation function currently only gives a score for number of moves and a huge bonus for owning a corner square. Planned is an evaluation function that uses a neural network.
+Evaluation function currently only gives a score for number of moves and a huge bonus for owning a corner square. 
 
 Neural network is done completely from scratch. It's a feedforward neural network, using int8 weights on all layers and a scaling factor of 64 on int16 outputs of layers. The first layer is updated incrementally. Visibly inspired by Stockfish's NNUE, however has taken a turn in (obviously worse) another direction. 
 
 
-it's sooo cutesy, if it works I'm gonna be proud of it u.u 
+it's sooo cutesy, if it works I'm gonna be proud of it u.u (it does work !!!)
 
 
 
