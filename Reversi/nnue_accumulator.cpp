@@ -22,7 +22,7 @@ void NN::nnue_accumulator::read_weights(float* weights_from_file, float* biases_
 				//weights are then divided by the weight scaling factor
 				//as one can notice, this is identical to just using the input scaling factor for weights directly
 				//however that would imply the int8 weights can only hold values from -128/127 (-128 divided by 127, scaling factor of input) to 127/127, which is not what we want
-				//instead, I just expand the range of int values for weights to be -256, 255, which allows me to use both input scaling factor
+				//instead, I just expand the range of int values for weights to be -256, 255, which allows me to use both input scaling factors
 				//and keep the weights in range -2,127/64
 				int weight_int = (int)std::round(weights_from_file[index] * weight_scaling_factor * input_scaling_factor / weight_scaling_factor);
 				weight_int = std::clamp(weight_int, -256, 255);
@@ -85,7 +85,7 @@ void NN::nnue_accumulator::update_accumulator(const nnue_accumulator& old_acc, c
 
 	//serialization of added pieces
 	//side to move has just gained some pieces and has its own weights for the gained pieces
-	//the opposite side to move has uses the same weights, but has different input
+	//the opposite side to move uses the same weights, but has different input
 
 	//the added pieces use the "side to move pieces" weights for side_to_move
 	//meanwhile they use "opposite side pieces" weights for opposite_side

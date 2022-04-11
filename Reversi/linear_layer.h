@@ -72,13 +72,6 @@ public:
 				float sum = _mm_cvtss_f32(summed_vector);
 				output[output_neuron] += sum;
 			}
-			/*if (apply_relu)
-			{
-				if (output[output_neuron] < 0)
-				{
-					output[output_neuron] = 0;
-				}
-			}*/
 		}
 
 		return output;
